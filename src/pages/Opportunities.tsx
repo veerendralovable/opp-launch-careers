@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -290,7 +289,7 @@ const Opportunities = () => {
                     </div>
                     <div className="flex gap-3">
                       <Button className="bg-blue-600 hover:bg-blue-700">
-                        <Ex className="h-4 w-4 mr-2" />
+                        <ExternalLink className="h-4 w-4 mr-2" />
                         Apply Now
                       </Button>
                       <Link to={`/opportunities/${opportunity.id}`}>
