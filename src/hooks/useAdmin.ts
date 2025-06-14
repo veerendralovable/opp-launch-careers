@@ -74,7 +74,7 @@ export const useAdmin = () => {
     try {
       const today = new Date().toISOString().split('T')[0];
       
-      const { error } = await supa base
+      const { error } = await supabase
         .from('opportunities')
         .update({ is_expired: true })
         .lt('deadline', today)
