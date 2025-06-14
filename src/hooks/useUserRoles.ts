@@ -40,16 +40,28 @@ export const useUserRoles = () => {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // First fetch all profiles
+      const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select(`
-          *,
-          user_roles (*)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setUsers(data || []);
+      if (profilesError) throw profilesError;
+
+      // Then fetch all user roles
+      const { data: userRoles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('*');
+
+      if (rolesError) throw rolesError;
+
+      // Combine the data
+      const usersWithRoles = profiles?.map(profile => ({
+        ...profile,
+        user_roles: userRoles?.filter(role => role.user_id === profile.id) || []
+      })) || [];
+
+      setUsers(usersWithRoles);
     } catch (error: any) {
       console.error('Error fetching users:', error);
       toast({
