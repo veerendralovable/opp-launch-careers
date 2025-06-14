@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminNavigation from "./components/AdminNavigation";
 import Home from "./pages/Home";
 import Opportunities from "./pages/Opportunities";
 import OpportunityDetail from "./pages/OpportunityDetail";
@@ -14,6 +15,8 @@ import Submit from "./pages/Submit";
 import Tailor from "./pages/Tailor";
 import Dashboard from "./pages/Dashboard";
 import Admin from "./pages/Admin";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminSettings from "./pages/AdminSettings";
 import UserManagement from "./pages/UserManagement";
 import Bookmarks from "./pages/Bookmarks";
 import Scholarships from "./pages/Scholarships";
@@ -21,6 +24,13 @@ import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
+
+const AdminLayout = ({ children }: { children: React.ReactNode }) => (
+  <>
+    <AdminNavigation />
+    {children}
+  </>
+);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -58,11 +68,25 @@ const App = () => (
                   </ProtectedRoute>
                 } 
               />
+              
+              {/* Admin Routes */}
               <Route 
                 path="/admin" 
                 element={
                   <ProtectedRoute requireAuth={true} requireAdmin={true}>
-                    <Admin />
+                    <AdminLayout>
+                      <AdminDashboard />
+                    </AdminLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/opportunities" 
+                element={
+                  <ProtectedRoute requireAuth={true} requireAdmin={true}>
+                    <AdminLayout>
+                      <Admin />
+                    </AdminLayout>
                   </ProtectedRoute>
                 } 
               />
@@ -70,10 +94,23 @@ const App = () => (
                 path="/admin/users" 
                 element={
                   <ProtectedRoute requireAuth={true} requireAdmin={true}>
-                    <UserManagement />
+                    <AdminLayout>
+                      <UserManagement />
+                    </AdminLayout>
                   </ProtectedRoute>
                 } 
               />
+              <Route 
+                path="/admin/settings" 
+                element={
+                  <ProtectedRoute requireAuth={true} requireAdmin={true}>
+                    <AdminLayout>
+                      <AdminSettings />
+                    </AdminLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              
               <Route 
                 path="/bookmarks" 
                 element={

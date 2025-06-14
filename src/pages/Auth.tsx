@@ -42,9 +42,14 @@ const Auth = () => {
           role: role
         });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error assigning role:', error);
+        throw error;
+      }
+      
+      console.log(`Successfully assigned ${role} role to user ${userId}`);
     } catch (error: any) {
-      console.error('Error assigning role:', error);
+      console.error('Error in assignUserRole:', error);
       throw error;
     }
   };
@@ -60,13 +65,24 @@ const Auth = () => {
           throw new Error('Invalid admin code. Access denied.');
         }
 
-        const { error } = await signUp(email, password, name);
-        if (error) throw error;
+        console.log('Starting signup process...');
+        const { error: signUpError } = await signUp(email, password, name);
+        if (signUpError) throw signUpError;
+
+        // Wait a moment for the user to be created
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
         // Get the newly created user
-        const { data: { user: newUser } } = await supabase.auth.getUser();
+        const { data: { user: newUser }, error: userError } = await supabase.auth.getUser();
         
+        if (userError) {
+          console.error('Error getting user:', userError);
+          throw userError;
+        }
+
         if (newUser) {
+          console.log('User created:', newUser.id, 'Assigning role:', selectedRole);
+          
           // Assign the selected role
           await assignUserRole(newUser.id, selectedRole as 'user' | 'admin');
           
@@ -76,6 +92,8 @@ const Auth = () => {
               ? "Admin account created successfully. Please check your email to verify your account."
               : "Please check your email to verify your account.",
           });
+        } else {
+          throw new Error('User creation failed - no user returned');
         }
       } else {
         const { error } = await signIn(email, password);
@@ -87,6 +105,7 @@ const Auth = () => {
         navigate('/dashboard');
       }
     } catch (error: any) {
+      console.error('Auth error:', error);
       toast({
         title: "Error",
         description: error.message,
