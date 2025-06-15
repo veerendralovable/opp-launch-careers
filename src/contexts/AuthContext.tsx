@@ -7,6 +7,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  userRole: string | null;
   signUp: (email: string, password: string, name?: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<{ error: any }>;
@@ -25,6 +26,7 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const assignUserRole = async (userId: string, role: 'user' | 'admin' | 'moderator') => {
@@ -48,6 +50,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const fetchUserRole = async (userId: string) => {
+    try {
+      // Check if user is admin
+      const { data: isAdminData, error: adminError } = await supabase.rpc('is_admin', {
+        _user_id: userId
+      });
+      
+      if (adminError) throw adminError;
+      
+      if (isAdminData) {
+        setUserRole('admin');
+        return 'admin';
+      }
+
+      // Check if user is moderator
+      const { data: isModeratorData, error: moderatorError } = await supabase.rpc('has_role', {
+        _user_id: userId,
+        _role: 'moderator'
+      });
+      
+      if (moderatorError) throw moderatorError;
+      
+      if (isModeratorData) {
+        setUserRole('moderator');
+        return 'moderator';
+      }
+
+      // Default to user role
+      setUserRole('user');
+      return 'user';
+    } catch (error: any) {
+      console.error('Error fetching user role:', error);
+      setUserRole('user');
+      return 'user';
+    }
+  };
+
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -56,15 +95,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(session);
         setUser(session?.user ?? null);
 
-        // Handle role assignment after email confirmation
-        if (event === 'SIGNED_IN' && session?.user) {
+        if (session?.user) {
+          // Fetch user role
+          await fetchUserRole(session.user.id);
+          
+          // Handle role assignment after email confirmation
           const pendingRole = localStorage.getItem('pendingUserRole');
           if (pendingRole && pendingRole !== 'user') {
             console.log('Assigning pending role:', pendingRole);
             await assignUserRole(session.user.id, pendingRole as 'user' | 'admin' | 'moderator');
             localStorage.removeItem('pendingUserRole');
+            // Refresh role after assignment
+            await fetchUserRole(session.user.id);
           }
+        } else {
+          setUserRole(null);
         }
+        
+        setLoading(false);
       }
     );
 
@@ -72,7 +120,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      setLoading(false);
+      if (session?.user) {
+        fetchUserRole(session.user.id);
+      } else {
+        setLoading(false);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -104,6 +156,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
+    setUserRole(null);
     return { error };
   };
 
@@ -111,6 +164,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user,
     session,
     loading,
+    userRole,
     signUp,
     signIn,
     signOut,

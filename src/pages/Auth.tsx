@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -19,39 +18,25 @@ const Auth = () => {
   const [selectedRole, setSelectedRole] = useState('user');
   const [accessCode, setAccessCode] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signUp, signIn, user } = useAuth();
+  const { signUp, signIn, user, userRole } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user) {
-      navigate('/dashboard');
+    if (user && userRole) {
+      // Redirect based on user role
+      if (userRole === 'admin') {
+        navigate('/admin');
+      } else if (userRole === 'moderator') {
+        navigate('/moderator');
+      } else {
+        navigate('/dashboard');
+      }
     }
-  }, [user, navigate]);
+  }, [user, userRole, navigate]);
 
   const validateAccessCode = (code: string) => {
     return code === 'rani';
-  };
-
-  const assignUserRole = async (userId: string, role: 'user' | 'admin' | 'moderator') => {
-    try {
-      const { error } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: userId,
-          role: role
-        });
-      
-      if (error) {
-        console.error('Error assigning role:', error);
-        throw error;
-      }
-      
-      console.log(`Successfully assigned ${role} role to user ${userId}`);
-    } catch (error: any) {
-      console.error('Error in assignUserRole:', error);
-      throw error;
-    }
   };
 
   const requiresAccessCode = (role: string) => {
@@ -97,7 +82,7 @@ const Auth = () => {
           title: "Welcome back!",
           description: "You have successfully signed in.",
         });
-        navigate('/dashboard');
+        // Navigation will be handled by useEffect when userRole is set
       }
     } catch (error: any) {
       console.error('Auth error:', error);

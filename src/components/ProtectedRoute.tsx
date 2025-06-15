@@ -2,7 +2,7 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useUserRoles } from '@/hooks/useUserRoles';
+import { useModeratorAccess } from '@/hooks/useModeratorAccess';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertCircle, Loader2 } from 'lucide-react';
 
@@ -19,12 +19,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requireAdmin = false,
   requireModerator = false
 }) => {
-  const { user, loading: authLoading } = useAuth();
-  const { isAdmin, loading: adminLoading } = useUserRoles();
+  const { user, loading: authLoading, userRole } = useAuth();
+  const { hasModeratorAccess, loading: moderatorLoading } = useModeratorAccess();
   const location = useLocation();
 
   // Show loading while checking authentication
-  if (authLoading || ((requireAdmin || requireModerator) && adminLoading)) {
+  if (authLoading || ((requireAdmin || requireModerator) && moderatorLoading)) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -41,7 +41,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   // Check admin requirement
-  if (requireAdmin && !isAdmin) {
+  if (requireAdmin && userRole !== 'admin') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
@@ -60,10 +60,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  // Check moderator requirement (moderators can access moderator areas, admins can access everything)
-  if (requireModerator && !isAdmin) {
-    // We would need to check if user is a moderator here
-    // For now, treating moderator same as admin access
+  // Check moderator requirement (moderators and admins can access moderator areas)
+  if (requireModerator && !hasModeratorAccess) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <Card className="max-w-md w-full">

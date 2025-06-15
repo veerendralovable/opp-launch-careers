@@ -8,6 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminNavigation from "./components/AdminNavigation";
+import ModeratorNavigation from "./components/ModeratorNavigation";
 import ProductionDataLoader from "./components/ProductionDataLoader";
 import Home from "./pages/Home";
 import Opportunities from "./pages/Opportunities";
@@ -23,6 +24,7 @@ import AdminNotifications from "./pages/AdminNotifications";
 import AdminExpired from "./pages/AdminExpired";
 import AdminMonetization from "./pages/AdminMonetization";
 import AdminEmailCampaigns from "./pages/AdminEmailCampaigns";
+import ModeratorDashboard from "./pages/ModeratorDashboard";
 import UserManagement from "./pages/UserManagement";
 import Bookmarks from "./pages/Bookmarks";
 import Scholarships from "./pages/Scholarships";
@@ -34,6 +36,13 @@ const queryClient = new QueryClient();
 const AdminLayout = ({ children }: { children: React.ReactNode }) => (
   <>
     <AdminNavigation />
+    {children}
+  </>
+);
+
+const ModeratorLayout = ({ children }: { children: React.ReactNode }) => (
+  <>
+    <ModeratorNavigation />
     {children}
   </>
 );
@@ -72,6 +81,58 @@ const App = () => (
                 element={
                   <ProtectedRoute requireAuth={true}>
                     <Dashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              {/* Moderator Routes */}
+              <Route 
+                path="/moderator" 
+                element={
+                  <ProtectedRoute requireAuth={true} requireModerator={true}>
+                    <ModeratorLayout>
+                      <ModeratorDashboard />
+                    </ModeratorLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/moderator/opportunities" 
+                element={
+                  <ProtectedRoute requireAuth={true} requireModerator={true}>
+                    <ModeratorLayout>
+                      <Admin />
+                    </ModeratorLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/moderator/approved" 
+                element={
+                  <ProtectedRoute requireAuth={true} requireModerator={true}>
+                    <ModeratorLayout>
+                      <Opportunities />
+                    </ModeratorLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/moderator/users" 
+                element={
+                  <ProtectedRoute requireAuth={true} requireModerator={true}>
+                    <ModeratorLayout>
+                      <UserManagement />
+                    </ModeratorLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/moderator/notifications" 
+                element={
+                  <ProtectedRoute requireAuth={true} requireModerator={true}>
+                    <ModeratorLayout>
+                      <AdminNotifications />
+                    </ModeratorLayout>
                   </ProtectedRoute>
                 } 
               />
