@@ -27,13 +27,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const assignUserRole = async (userId: string, role: 'user' | 'admin' | 'moderator') => {
+    try {
+      const { error } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: userId,
+          role: role
+        });
+      
+      if (error) {
+        console.error('Error assigning role:', error);
+        throw error;
+      }
+      
+      console.log(`Successfully assigned ${role} role to user ${userId}`);
+    } catch (error: any) {
+      console.error('Error in assignUserRole:', error);
+      // Don't throw here to avoid blocking the auth flow
+    }
+  };
+
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         console.log('Auth state changed:', event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
+
+        // Handle role assignment after email confirmation
+        if (event === 'SIGNED_IN' && session?.user) {
+          const pendingRole = localStorage.getItem('pendingUserRole');
+          if (pendingRole && pendingRole !== 'user') {
+            console.log('Assigning pending role:', pendingRole);
+            await assignUserRole(session.user.id, pendingRole as 'user' | 'admin' | 'moderator');
+            localStorage.removeItem('pendingUserRole');
+          }
+        }
       }
     );
 

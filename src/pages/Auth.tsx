@@ -73,36 +73,23 @@ const Auth = () => {
         const { error: signUpError } = await signUp(email, password, name);
         if (signUpError) throw signUpError;
 
-        // Wait a moment for the user to be created
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // For signup, we don't immediately assign roles because the user needs to confirm their email first
+        // The role assignment will happen after email confirmation
+        // For now, we'll store the intended role in localStorage to assign it later
+        if (selectedRole !== 'user') {
+          localStorage.setItem('pendingUserRole', selectedRole);
+        }
 
-        // Get the newly created user
-        const { data: { user: newUser }, error: userError } = await supabase.auth.getUser();
+        const roleMessages = {
+          user: "Please check your email to verify your account.",
+          admin: "Admin account created successfully. Please check your email to verify your account.",
+          moderator: "Moderator account created successfully. Please check your email to verify your account."
+        };
         
-        if (userError) {
-          console.error('Error getting user:', userError);
-          throw userError;
-        }
-
-        if (newUser) {
-          console.log('User created:', newUser.id, 'Assigning role:', selectedRole);
-          
-          // Assign the selected role
-          await assignUserRole(newUser.id, selectedRole as 'user' | 'admin' | 'moderator');
-          
-          const roleMessages = {
-            user: "Please check your email to verify your account.",
-            admin: "Admin account created successfully. Please check your email to verify your account.",
-            moderator: "Moderator account created successfully. Please check your email to verify your account."
-          };
-          
-          toast({
-            title: "Account created!",
-            description: roleMessages[selectedRole as keyof typeof roleMessages],
-          });
-        } else {
-          throw new Error('User creation failed - no user returned');
-        }
+        toast({
+          title: "Account created!",
+          description: roleMessages[selectedRole as keyof typeof roleMessages],
+        });
       } else {
         const { error } = await signIn(email, password);
         if (error) throw error;
