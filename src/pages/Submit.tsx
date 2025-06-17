@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -19,7 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const Submit = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
@@ -125,6 +124,9 @@ const Submit = () => {
     setLoading(true);
 
     try {
+      // Determine approval status based on user role
+      const isApproved = userRole === 'admin' || userRole === 'moderator';
+
       const { error } = await supabase
         .from('opportunities')
         .insert({
@@ -135,17 +137,23 @@ const Submit = () => {
           location: formData.location.trim() || null,
           company: formData.company.trim() || null,
           source_url: formData.sourceUrl.trim(),
-          deadline: formData.deadline!.toISOString().split('T')[0], // Format as YYYY-MM-DD
+          deadline: formData.deadline!.toISOString().split('T')[0],
           tags: tags,
           submitted_by: user.id,
-          is_approved: false, // Requires admin approval
+          is_approved: isApproved,
+          approved_at: isApproved ? new Date().toISOString() : null,
+          approved_by: isApproved ? user.id : null,
         });
 
       if (error) throw error;
 
+      const message = isApproved 
+        ? "Your opportunity has been submitted and approved automatically."
+        : "Your opportunity has been submitted and is pending approval.";
+
       toast({
         title: "Opportunity Submitted!",
-        description: "Your opportunity has been submitted and is pending approval.",
+        description: message,
       });
 
       // Reset form
@@ -203,6 +211,13 @@ const Submit = () => {
           <p className="text-gray-600 mt-2">
             Share internships, contests, events, and scholarships with the community
           </p>
+          {(userRole === 'admin' || userRole === 'moderator') && (
+            <div className="mt-2">
+              <Badge variant="secondary" className="bg-green-100 text-green-800">
+                Your submissions will be automatically approved
+              </Badge>
+            </div>
+          )}
         </div>
 
         <Card>
@@ -416,10 +431,21 @@ const Submit = () => {
               <div>
                 <h3 className="font-medium text-gray-900 mb-1">Submission Guidelines</h3>
                 <ul className="text-sm text-gray-600 space-y-1">
-                  <li>• All submissions are reviewed by our admin team before approval</li>
-                  <li>• Please ensure all information is accurate and up-to-date</li>
-                  <li>• Include relevant tags to help users discover your opportunity</li>
-                  <li>• Provide a detailed description with clear requirements</li>
+                  {userRole === 'admin' || userRole === 'moderator' ? (
+                    <>
+                      <li>• Your submissions are automatically approved due to your role</li>
+                      <li>• Please ensure all information is accurate and up-to-date</li>
+                      <li>• Include relevant tags to help users discover opportunities</li>
+                      <li>• Provide a detailed description with clear requirements</li>
+                    </>
+                  ) : (
+                    <>
+                      <li>• All submissions are reviewed by our admin team before approval</li>
+                      <li>• Please ensure all information is accurate and up-to-date</li>
+                      <li>• Include relevant tags to help users discover your opportunity</li>
+                      <li>• Provide a detailed description with clear requirements</li>
+                    </>
+                  )}
                 </ul>
               </div>
             </div>

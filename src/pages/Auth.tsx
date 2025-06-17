@@ -24,21 +24,24 @@ const Auth = () => {
   useEffect(() => {
     if (user && userRole) {
       console.log('User authenticated with role:', userRole);
-      // Redirect based on user role
-      switch (userRole) {
-        case 'admin':
-          console.log('Redirecting to admin dashboard');
-          navigate('/admin', { replace: true });
-          break;
-        case 'moderator':
-          console.log('Redirecting to moderator dashboard');
-          navigate('/moderator', { replace: true });
-          break;
-        default:
-          console.log('Redirecting to user dashboard');
-          navigate('/dashboard', { replace: true });
-          break;
-      }
+      
+      // Add a small delay to ensure role is properly set
+      setTimeout(() => {
+        switch (userRole) {
+          case 'admin':
+            console.log('Redirecting to admin dashboard');
+            navigate('/admin', { replace: true });
+            break;
+          case 'moderator':
+            console.log('Redirecting to moderator dashboard');
+            navigate('/moderator', { replace: true });
+            break;
+          default:
+            console.log('Redirecting to user dashboard');
+            navigate('/dashboard', { replace: true });
+            break;
+        }
+      }, 500);
     }
   }, [user, userRole, navigate]);
 
@@ -62,14 +65,15 @@ const Auth = () => {
         }
 
         console.log('Starting signup process for role:', selectedRole);
-        const { error: signUpError } = await signUp(email, password, name);
-        if (signUpError) throw signUpError;
-
-        // Store the intended role for assignment after email confirmation
+        
+        // Store the intended role before signup
         if (selectedRole !== 'user') {
           localStorage.setItem('pendingUserRole', selectedRole);
           console.log('Stored pending role:', selectedRole);
         }
+
+        const { error: signUpError } = await signUp(email, password, name);
+        if (signUpError) throw signUpError;
 
         const roleMessages = {
           user: "Please check your email to verify your account.",

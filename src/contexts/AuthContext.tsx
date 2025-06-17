@@ -62,6 +62,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       console.log(`Successfully assigned ${role} role to user ${userId}`);
+      
+      // Immediately fetch the role to update state
+      await fetchUserRole(userId);
     } catch (error: any) {
       console.error('Error in assignUserRole:', error);
     }
@@ -71,36 +74,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('Fetching role for user:', userId);
       
-      // Check if user is admin
-      const { data: isAdminData, error: adminError } = await supabase.rpc('is_admin', {
-        _user_id: userId
-      });
+      // Fetch user role directly from user_roles table
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .single();
       
-      if (adminError) throw adminError;
-      
-      if (isAdminData) {
-        console.log('User is admin');
-        setUserRole('admin');
-        return 'admin';
+      if (roleError && roleError.code !== 'PGRST116') {
+        console.error('Error fetching user role:', roleError);
+        setUserRole('user');
+        return 'user';
       }
 
-      // Check if user is moderator
-      const { data: isModeratorData, error: moderatorError } = await supabase.rpc('has_role', {
-        _user_id: userId,
-        _role: 'moderator'
-      });
-      
-      if (moderatorError) throw moderatorError;
-      
-      if (isModeratorData) {
-        console.log('User is moderator');
-        setUserRole('moderator');
-        return 'moderator';
-      }
-
-      console.log('User is regular user');
-      setUserRole('user');
-      return 'user';
+      const role = roleData?.role || 'user';
+      console.log('User role fetched:', role);
+      setUserRole(role);
+      return role;
     } catch (error: any) {
       console.error('Error fetching user role:', error);
       setUserRole('user');
@@ -121,26 +111,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          // Use setTimeout to prevent potential deadlocks
-          setTimeout(async () => {
-            if (!mounted) return;
+          try {
+            // Check for pending role assignment
+            const pendingRole = localStorage.getItem('pendingUserRole');
             
-            try {
-              const role = await fetchUserRole(session.user.id);
-              console.log('Fetched user role:', role);
-              
-              const pendingRole = localStorage.getItem('pendingUserRole');
-              if (pendingRole && pendingRole !== 'user') {
-                console.log('Assigning pending role:', pendingRole);
-                await assignUserRole(session.user.id, pendingRole as 'user' | 'admin' | 'moderator');
-                localStorage.removeItem('pendingUserRole');
-                // Fetch the role again after assignment
-                await fetchUserRole(session.user.id);
-              }
-            } catch (error) {
-              console.error('Error in auth state change handler:', error);
+            if (pendingRole && pendingRole !== 'user') {
+              console.log('Assigning pending role:', pendingRole);
+              await assignUserRole(session.user.id, pendingRole as 'user' | 'admin' | 'moderator');
+              localStorage.removeItem('pendingUserRole');
+            } else {
+              // Fetch existing role
+              await fetchUserRole(session.user.id);
             }
-          }, 100);
+          } catch (error) {
+            console.error('Error in auth state change handler:', error);
+            setUserRole('user');
+          }
         } else {
           setUserRole(null);
         }
