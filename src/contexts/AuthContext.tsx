@@ -40,6 +40,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const assignUserRole = async (userId: string, role: 'user' | 'admin' | 'moderator') => {
     try {
+      console.log('Assigning role:', role, 'to user:', userId);
+      
+      // First, delete any existing roles for this user
+      await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', userId);
+
+      // Then insert the new role
       const { error } = await supabase
         .from('user_roles')
         .insert({
@@ -60,6 +69,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchUserRole = async (userId: string) => {
     try {
+      console.log('Fetching role for user:', userId);
+      
+      // Check if user is admin
       const { data: isAdminData, error: adminError } = await supabase.rpc('is_admin', {
         _user_id: userId
       });
@@ -67,10 +79,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (adminError) throw adminError;
       
       if (isAdminData) {
+        console.log('User is admin');
         setUserRole('admin');
         return 'admin';
       }
 
+      // Check if user is moderator
       const { data: isModeratorData, error: moderatorError } = await supabase.rpc('has_role', {
         _user_id: userId,
         _role: 'moderator'
@@ -79,10 +93,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (moderatorError) throw moderatorError;
       
       if (isModeratorData) {
+        console.log('User is moderator');
         setUserRole('moderator');
         return 'moderator';
       }
 
+      console.log('User is regular user');
       setUserRole('user');
       return 'user';
     } catch (error: any) {
@@ -109,16 +125,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setTimeout(async () => {
             if (!mounted) return;
             
-            const role = await fetchUserRole(session.user.id);
-            
-            const pendingRole = localStorage.getItem('pendingUserRole');
-            if (pendingRole && pendingRole !== 'user') {
-              console.log('Assigning pending role:', pendingRole);
-              await assignUserRole(session.user.id, pendingRole as 'user' | 'admin' | 'moderator');
-              localStorage.removeItem('pendingUserRole');
-              await fetchUserRole(session.user.id);
+            try {
+              const role = await fetchUserRole(session.user.id);
+              console.log('Fetched user role:', role);
+              
+              const pendingRole = localStorage.getItem('pendingUserRole');
+              if (pendingRole && pendingRole !== 'user') {
+                console.log('Assigning pending role:', pendingRole);
+                await assignUserRole(session.user.id, pendingRole as 'user' | 'admin' | 'moderator');
+                localStorage.removeItem('pendingUserRole');
+                // Fetch the role again after assignment
+                await fetchUserRole(session.user.id);
+              }
+            } catch (error) {
+              console.error('Error in auth state change handler:', error);
             }
-          }, 0);
+          }, 100);
         } else {
           setUserRole(null);
         }
@@ -132,6 +154,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (mounted) {
+        console.log('Initial session:', session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
@@ -181,8 +204,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (error) throw error;
       
+      console.log('Sign in successful for user:', data.user?.email);
       return { error: null };
     } catch (error) {
+      console.error('Sign in error:', error);
       return { error };
     }
   };

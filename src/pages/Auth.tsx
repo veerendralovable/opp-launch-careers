@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -24,13 +23,21 @@ const Auth = () => {
 
   useEffect(() => {
     if (user && userRole) {
+      console.log('User authenticated with role:', userRole);
       // Redirect based on user role
-      if (userRole === 'admin') {
-        navigate('/admin');
-      } else if (userRole === 'moderator') {
-        navigate('/moderator');
-      } else {
-        navigate('/dashboard');
+      switch (userRole) {
+        case 'admin':
+          console.log('Redirecting to admin dashboard');
+          navigate('/admin', { replace: true });
+          break;
+        case 'moderator':
+          console.log('Redirecting to moderator dashboard');
+          navigate('/moderator', { replace: true });
+          break;
+        default:
+          console.log('Redirecting to user dashboard');
+          navigate('/dashboard', { replace: true });
+          break;
       }
     }
   }, [user, userRole, navigate]);
@@ -54,13 +61,14 @@ const Auth = () => {
           throw new Error('Invalid access code. Access denied.');
         }
 
-        console.log('Starting signup process...');
+        console.log('Starting signup process for role:', selectedRole);
         const { error: signUpError } = await signUp(email, password, name);
         if (signUpError) throw signUpError;
 
         // Store the intended role for assignment after email confirmation
         if (selectedRole !== 'user') {
           localStorage.setItem('pendingUserRole', selectedRole);
+          console.log('Stored pending role:', selectedRole);
         }
 
         const roleMessages = {
@@ -74,12 +82,15 @@ const Auth = () => {
           description: roleMessages[selectedRole as keyof typeof roleMessages],
         });
       } else {
+        console.log('Starting signin process');
         const { error } = await signIn(email, password);
         if (error) throw error;
+        
         toast({
           title: "Welcome back!",
           description: "You have successfully signed in.",
         });
+        // Navigation will be handled by useEffect when userRole is set
       }
     } catch (error: any) {
       console.error('Auth error:', error);

@@ -2,7 +2,6 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useModeratorAccess } from '@/hooks/useModeratorAccess';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertCircle, Loader2 } from 'lucide-react';
 
@@ -19,12 +18,14 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requireAdmin = false,
   requireModerator = false
 }) => {
-  const { user, loading: authLoading, userRole } = useAuth();
-  const { hasModeratorAccess, loading: moderatorLoading } = useModeratorAccess();
+  const { user, loading, userRole } = useAuth();
   const location = useLocation();
 
+  console.log('ProtectedRoute - user:', user?.email, 'userRole:', userRole, 'loading:', loading);
+  console.log('ProtectedRoute - requireAuth:', requireAuth, 'requireAdmin:', requireAdmin, 'requireModerator:', requireModerator);
+
   // Show loading while checking authentication
-  if (authLoading || ((requireAdmin || requireModerator) && moderatorLoading)) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -37,11 +38,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // Check authentication requirement
   if (requireAuth && !user) {
+    console.log('Redirecting to auth - no user');
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
   // Check admin requirement
   if (requireAdmin && userRole !== 'admin') {
+    console.log('Access denied - admin required, user role:', userRole);
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
@@ -61,7 +64,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   // Check moderator requirement (moderators and admins can access moderator areas)
-  if (requireModerator && !hasModeratorAccess) {
+  if (requireModerator && !['moderator', 'admin'].includes(userRole || '')) {
+    console.log('Access denied - moderator required, user role:', userRole);
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
@@ -80,6 +84,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
+  console.log('Access granted - rendering children');
   return <>{children}</>;
 };
 
