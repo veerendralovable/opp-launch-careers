@@ -10,7 +10,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { validateAccessCode } from '@/config/security';
 import { Loader2, Shield, User, Crown } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 
 const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -47,10 +46,6 @@ const Auth = () => {
       }, 500);
     }
   }, [user, userRole, navigate]);
-
-  const validateAccessCode = (code: string) => {
-    return code === 'rani';
-  };
 
   const requiresAccessCode = (role: string) => {
     return role === 'admin' || role === 'moderator';
