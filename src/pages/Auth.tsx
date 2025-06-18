@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -18,13 +19,16 @@ const Auth = () => {
   const [selectedRole, setSelectedRole] = useState('user');
   const [accessCode, setAccessCode] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signUp, signIn, user, userRole } = useAuth();
+  const [hasRedirected, setHasRedirected] = useState(false);
+  const { signUp, signIn, user, userRole, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user && userRole) {
-      console.log('User authenticated with role:', userRole);
+    // Only redirect if we have both user and userRole, and haven't redirected yet
+    if (user && userRole && !authLoading && !hasRedirected) {
+      console.log('User authenticated with role:', userRole, '- initiating redirect');
+      setHasRedirected(true);
       
       // Add a small delay to ensure role is properly set
       setTimeout(() => {
@@ -44,7 +48,14 @@ const Auth = () => {
         }
       }, 500);
     }
-  }, [user, userRole, navigate]);
+  }, [user, userRole, authLoading, navigate, hasRedirected]);
+
+  // Reset redirect flag when user logs out
+  useEffect(() => {
+    if (!user) {
+      setHasRedirected(false);
+    }
+  }, [user]);
 
   const requiresAccessCode = (role: string) => {
     return role === 'admin' || role === 'moderator';
@@ -98,6 +109,18 @@ const Auth = () => {
       setLoading(false);
     }
   };
+
+  // Show loading spinner if auth is loading
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   const getRoleIcon = (role: string) => {
     switch (role) {
