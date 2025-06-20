@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { validatePasswordStrength, createRateLimiter } from '@/config/security';
 
 interface AuthContextType {
   user: User | null;
@@ -23,6 +24,9 @@ export const useAuth = () => {
   return context;
 };
 
+// Rate limiter for login attempts
+const loginRateLimiter = createRateLimiter(5, 15 * 60 * 1000); // 5 attempts per 15 minutes
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -30,13 +34,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   const cleanupAuthState = () => {
-    Object.keys(localStorage).forEach((key) => {
-      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+    try {
+      // Clean up all auth-related localStorage items
+      const keysToRemove = Object.keys(localStorage).filter(key => 
+        key.startsWith('supabase.auth.') || 
+        key.includes('sb-') ||
+        key === 'pendingUserRole' ||
+        key === 'userRole'
+      );
+      
+      keysToRemove.forEach(key => {
         localStorage.removeItem(key);
-      }
-    });
-    localStorage.removeItem('pendingUserRole');
-    localStorage.removeItem('userRole');
+      });
+      
+      console.log('Auth state cleanup completed');
+    } catch (error) {
+      console.error('Error during auth state cleanup:', error);
+    }
   };
 
   const assignUserRoleSecure = async (userId: string, role: 'user' | 'admin' | 'moderator') => {
@@ -172,6 +186,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUp = async (email: string, password: string, name?: string, requestedRole?: string) => {
     try {
+      // Validate input
+      if (!email || !password) {
+        return { error: { message: 'Email and password are required' } };
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return { error: { message: 'Please enter a valid email address' } };
+      }
+
+      // Validate password strength
+      const passwordValidation = validatePasswordStrength(password);
+      if (!passwordValidation.isValid) {
+        return { error: { message: passwordValidation.errors.join(', ') } };
+      }
+
       const redirectUrl = `${window.location.origin}/`;
       
       if (requestedRole && requestedRole !== 'user') {
@@ -189,14 +220,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
       });
+      
       return { error };
     } catch (error) {
+      console.error('Sign up error:', error);
       return { error };
     }
   };
 
   const signIn = async (email: string, password: string) => {
     try {
+      // Rate limiting check
+      const clientIP = 'client'; // In production, you'd get the real IP
+      if (!loginRateLimiter(clientIP)) {
+        return { error: { message: 'Too many login attempts. Please try again later.' } };
+      }
+
+      // Validate input
+      if (!email || !password) {
+        return { error: { message: 'Email and password are required' } };
+      }
+
       cleanupAuthState();
       
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -204,11 +248,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         password,
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Sign in error:', error);
+        throw error;
+      }
       
       console.log('Sign in successful for user:', data.user?.email);
       return { error: null };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Sign in error:', error);
       return { error };
     }
@@ -220,12 +267,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { error } = await supabase.auth.signOut({ scope: 'global' });
       setUserRole(null);
       
+      // Use replace instead of href to prevent navigation issues
       setTimeout(() => {
-        window.location.href = '/';
+        window.location.replace('/');
       }, 100);
       
       return { error };
     } catch (error) {
+      console.error('Sign out error:', error);
       return { error };
     }
   };
