@@ -25,12 +25,10 @@ const Auth = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Only redirect if we have both user and userRole, and haven't redirected yet
     if (user && userRole && !authLoading && !hasRedirected) {
       console.log('User authenticated with role:', userRole, '- initiating redirect');
       setHasRedirected(true);
       
-      // Add a small delay to ensure role is properly set
       setTimeout(() => {
         switch (userRole) {
           case 'admin':
@@ -50,7 +48,6 @@ const Auth = () => {
     }
   }, [user, userRole, authLoading, navigate, hasRedirected]);
 
-  // Reset redirect flag when user logs out
   useEffect(() => {
     if (!user) {
       setHasRedirected(false);
@@ -67,14 +64,12 @@ const Auth = () => {
 
     try {
       if (isSignUp) {
-        // Validate access code for special roles
         if (requiresAccessCode(selectedRole) && !validateAccessCode(accessCode, selectedRole as 'admin' | 'moderator')) {
           throw new Error('Invalid access code. Access denied.');
         }
 
         console.log('Starting secure signup process for role:', selectedRole);
         
-        // Pass the requested role to signUp function
         const { error: signUpError } = await signUp(email, password, name, selectedRole);
         if (signUpError) throw signUpError;
 
@@ -110,7 +105,6 @@ const Auth = () => {
     }
   };
 
-  // Show loading spinner if auth is loading
   if (authLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">

@@ -47,7 +47,6 @@ const UserManagement = () => {
     try {
       setLoading(true);
       
-      // First fetch all profiles
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
@@ -55,14 +54,12 @@ const UserManagement = () => {
 
       if (profilesError) throw profilesError;
 
-      // Then fetch all user roles
       const { data: userRoles, error: rolesError } = await supabase
         .from('user_roles')
         .select('*');
 
       if (rolesError) throw rolesError;
 
-      // Combine the data
       const usersWithRoles = profiles?.map(profile => ({
         ...profile,
         user_roles: userRoles?.filter(role => role.user_id === profile.id) || []
@@ -83,19 +80,10 @@ const UserManagement = () => {
 
   const updateUserRole = async (userId: string, newRole: UserRole) => {
     try {
-      // First, delete existing role
-      await supabase
-        .from('user_roles')
-        .delete()
-        .eq('user_id', userId);
-
-      // Then insert new role with proper typing
-      const { error } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: userId,
-          role: newRole as UserRole
-        });
+      const { data, error } = await supabase.rpc('assign_user_role_secure', {
+        _user_id: userId,
+        _role: newRole
+      });
 
       if (error) throw error;
 

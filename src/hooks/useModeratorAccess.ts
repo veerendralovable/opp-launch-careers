@@ -2,12 +2,15 @@
 import { useAuth } from '@/contexts/AuthContext';
 
 export const useModeratorAccess = () => {
-  const { userRole, loading } = useAuth();
+  const { userRole } = useAuth();
   
   const hasModeratorAccess = userRole === 'moderator' || userRole === 'admin';
-  
+  const isAdmin = userRole === 'admin';
+  const isModerator = userRole === 'moderator';
+
   return {
     hasModeratorAccess,
-    loading
+    isAdmin,
+    isModerator
   };
 };

@@ -35,42 +35,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.removeItem(key);
       }
     });
-    // Remove any insecure role storage
     localStorage.removeItem('pendingUserRole');
     localStorage.removeItem('userRole');
   };
 
-  const directAssignUserRole = async (userId: string, role: 'user' | 'admin' | 'moderator') => {
+  const assignUserRoleSecure = async (userId: string, role: 'user' | 'admin' | 'moderator') => {
     try {
-      console.log('Directly assigning role:', role, 'to user:', userId);
+      console.log('Using secure role assignment for:', role, 'to user:', userId);
       
-      // Direct database insertion for initial role assignment
-      const { data, error } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: userId,
-          role: role,
-          assigned_by: userId // Self-assignment for initial setup
-        });
+      const { data, error } = await supabase.rpc('assign_user_role_secure', {
+        _user_id: userId,
+        _role: role
+      });
       
       if (error) {
-        console.error('Error in direct role assignment:', error);
-        // Try updating existing role if insert failed due to conflict
-        const { error: updateError } = await supabase
-          .from('user_roles')
-          .update({ role: role })
-          .eq('user_id', userId);
-        
-        if (updateError) {
-          console.error('Error updating role:', updateError);
-          return false;
-        }
+        console.error('Error in secure role assignment:', error);
+        return false;
       }
       
       console.log(`Successfully assigned ${role} role to user ${userId}`);
       return true;
     } catch (error: any) {
-      console.error('Error in directAssignUserRole:', error);
+      console.error('Error in assignUserRoleSecure:', error);
       return false;
     }
   };
@@ -79,7 +65,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('Fetching role for user:', userId);
       
-      // Use the secure RLS-protected query
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
@@ -128,14 +113,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(session?.user ?? null);
 
           if (session?.user) {
-            // Check for pending role assignment
             const pendingRole = localStorage.getItem('pendingUserRole');
             
             if (pendingRole && pendingRole !== 'user') {
               console.log('Processing pending role assignment:', pendingRole);
               
-              // For initial admin/moderator setup, use direct assignment
-              const success = await directAssignUserRole(session.user.id, pendingRole as 'user' | 'admin' | 'moderator');
+              const success = await assignUserRoleSecure(session.user.id, pendingRole as 'user' | 'admin' | 'moderator');
               
               if (success) {
                 localStorage.removeItem('pendingUserRole');
@@ -146,7 +129,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 await fetchUserRole(session.user.id);
               }
             } else {
-              // Fetch existing role
               await fetchUserRole(session.user.id);
             }
           } else {
@@ -164,7 +146,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
 
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (mounted && !processingAuth) {
         console.log('Initial session:', session?.user?.email);
@@ -193,7 +174,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const redirectUrl = `${window.location.origin}/`;
       
-      // Store the requested role for post-verification assignment
       if (requestedRole && requestedRole !== 'user') {
         console.log('Storing pending role for post-verification assignment:', requestedRole);
         localStorage.setItem('pendingUserRole', requestedRole);
@@ -240,7 +220,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { error } = await supabase.auth.signOut({ scope: 'global' });
       setUserRole(null);
       
-      // Force page refresh to ensure clean state
       setTimeout(() => {
         window.location.href = '/';
       }, 100);

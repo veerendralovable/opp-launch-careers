@@ -11,25 +11,35 @@ export const useAdmin = () => {
   const [pendingOpportunities, setPendingOpportunities] = useState<Opportunity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { userRole } = useAuth();
+  const { userRole, user } = useAuth();
 
   const isAdmin = userRole === 'admin';
   const isModerator = userRole === 'moderator' || userRole === 'admin';
 
   const fetchOpportunities = async () => {
+    if (!user || (!isAdmin && !isModerator)) {
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
-      
-      // Fetch all opportunities
-      const { data: opportunities, error: opportunitiesError } = await supabase
+      setError(null);
+
+      const { data, error: fetchError } = await supabase
         .from('opportunities')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (opportunitiesError) throw opportunitiesError;
+      if (fetchError) {
+        throw fetchError;
+      }
 
-      setAllOpportunities(opportunities || []);
-      setPendingOpportunities(opportunities?.filter(opp => !opp.is_approved) || []);
+      const opportunities = data || [];
+      setAllOpportunities(opportunities);
+      setPendingOpportunities(opportunities.filter(opp => !opp.is_approved));
+      
+      console.log('Fetched opportunities:', opportunities.length);
     } catch (err: any) {
       console.error('Error fetching opportunities:', err);
       setError(err.message);
@@ -38,67 +48,60 @@ export const useAdmin = () => {
     }
   };
 
-  const approveOpportunity = async (id: string) => {
+  const approveOpportunity = async (opportunityId: string) => {
+    if (!isAdmin && !isModerator) return false;
+
     try {
       const { error } = await supabase
         .from('opportunities')
         .update({ 
-          is_approved: true, 
-          approved_at: new Date().toISOString(),
-          approved_by: (await supabase.auth.getUser()).data.user?.id 
+          is_approved: true,
+          approved_by: user?.id,
+          approved_at: new Date().toISOString()
         })
-        .eq('id', id);
+        .eq('id', opportunityId);
 
       if (error) throw error;
+
       await fetchOpportunities();
+      return true;
     } catch (err: any) {
       console.error('Error approving opportunity:', err);
-      throw err;
+      return false;
     }
   };
 
-  const rejectOpportunity = async (id: string, reason: string) => {
+  const rejectOpportunity = async (opportunityId: string, reason?: string) => {
+    if (!isAdmin && !isModerator) return false;
+
     try {
       const { error } = await supabase
         .from('opportunities')
         .update({ 
           is_approved: false,
-          rejection_reason: reason 
+          rejection_reason: reason
         })
-        .eq('id', id);
+        .eq('id', opportunityId);
 
       if (error) throw error;
+
       await fetchOpportunities();
+      return true;
     } catch (err: any) {
       console.error('Error rejecting opportunity:', err);
-      throw err;
-    }
-  };
-
-  const deleteOpportunity = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('opportunities')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-      await fetchOpportunities();
-    } catch (err: any) {
-      console.error('Error deleting opportunity:', err);
-      throw err;
+      return false;
     }
   };
 
   useEffect(() => {
-    if (isModerator) {
+    if (user && (isAdmin || isModerator)) {
       fetchOpportunities();
     }
-  }, [isModerator]);
+  }, [user, userRole]);
 
   // Set up real-time subscription
   useEffect(() => {
-    if (!isModerator) return;
+    if (!user || (!isAdmin && !isModerator)) return;
 
     const channel = supabase
       .channel('admin-opportunities')
@@ -110,6 +113,7 @@ export const useAdmin = () => {
           table: 'opportunities',
         },
         () => {
+          console.log('Real-time update received for opportunities');
           fetchOpportunities();
         }
       )
@@ -118,7 +122,7 @@ export const useAdmin = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [isModerator]);
+  }, [user, userRole]);
 
   return {
     allOpportunities,
@@ -129,7 +133,6 @@ export const useAdmin = () => {
     isModerator,
     approveOpportunity,
     rejectOpportunity,
-    deleteOpportunity,
     refetch: fetchOpportunities
   };
 };

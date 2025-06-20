@@ -460,6 +460,13 @@ export type Database = {
         }
         Returns: boolean
       }
+      assign_user_role_secure: {
+        Args: {
+          _user_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _user_id: string

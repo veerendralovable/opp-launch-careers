@@ -1,221 +1,33 @@
 
 import React from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
+import { Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useAnalytics } from '@/hooks/useAnalytics';
-import { BookmarkIcon, Home, Search, Plus, User, LogOut, Settings } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import NotificationBell from './NotificationBell';
+import AdminNavigation from '@/components/AdminNavigation';
+import ModeratorNavigation from '@/components/ModeratorNavigation';
 
-const Layout = ({ children }: { children: React.ReactNode }) => {
-  const { user, signOut } = useAuth();
-  const { trackEvent } = useAnalytics();
+const Layout = () => {
+  const { userRole } = useAuth();
   const location = useLocation();
-  const navigate = useNavigate();
-  const { toast } = useToast();
 
-  // Track page views
-  React.useEffect(() => {
-    if (user) {
-      trackEvent('page_view', { page: location.pathname });
-    }
-  }, [location.pathname, user, trackEvent]);
+  // Don't show navigation on auth page
+  if (location.pathname === '/auth') {
+    return <Outlet />;
+  }
 
-  const handleSignOut = async () => {
-    try {
-      trackEvent('user_logout');
-      const { error } = await signOut();
-      if (error) throw error;
-      
-      toast({
-        title: "Signed out successfully",
-        description: "You have been logged out of your account.",
-      });
-      navigate('/');
-    } catch (error: any) {
-      toast({
-        title: "Error signing out",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const navItems = [
-    { href: '/', label: 'Home', icon: Home },
-    { href: '/opportunities', label: 'Opportunities', icon: Search },
-    ...(user ? [
-      { href: '/submit', label: 'Submit', icon: Plus },
-      { href: '/bookmarks', label: 'Bookmarks', icon: BookmarkIcon },
-      { href: '/dashboard', label: 'Dashboard', icon: User },
-    ] : []),
-  ];
+  // Show admin navigation only for admin users on admin routes
+  const isAdminRoute = location.pathname.startsWith('/admin');
+  const isModeratorRoute = location.pathname.startsWith('/moderator');
+  
+  const showAdminNav = userRole === 'admin' && isAdminRoute;
+  const showModeratorNav = (userRole === 'moderator' || userRole === 'admin') && isModeratorRoute;
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      <header className="bg-white shadow-sm border-b sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <Link to="/" className="text-xl font-bold text-red-600">
-                OpportunityHub
-              </Link>
-              <nav className="hidden md:flex space-x-4">
-                {navItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    to={item.href}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      location.pathname === item.href
-                        ? 'bg-red-100 text-red-700'
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                    }`}
-                    onClick={() => trackEvent('navigation_click', { destination: item.href })}
-                  >
-                    <item.icon className="h-4 w-4" />
-                    {item.label}
-                  </Link>
-                ))}
-              </nav>
-            </div>
-
-            <div className="flex items-center space-x-4">
-              {user ? (
-                <>
-                  <NotificationBell />
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm text-gray-600">
-                      Welcome, {user.email}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleSignOut}
-                    >
-                      <LogOut className="h-4 w-4 mr-2" />
-                      Sign Out
-                    </Button>
-                  </div>
-                </>
-              ) : (
-                <div className="space-x-2">
-                  <Button variant="ghost" asChild>
-                    <Link to="/auth">Sign In</Link>
-                  </Button>
-                  <Button asChild>
-                    <Link to="/auth">Get Started</Link>
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="flex-1">
-        {children}
+    <div className="min-h-screen bg-background">
+      {showAdminNav && <AdminNavigation />}
+      {showModeratorNav && !showAdminNav && <ModeratorNavigation />}
+      <main className={showAdminNav || showModeratorNav ? '' : 'pt-0'}>
+        <Outlet />
       </main>
-
-      <footer className="bg-white border-t mt-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <h3 className="text-sm font-semibold text-gray-900 tracking-wider uppercase">
-                Platform
-              </h3>
-              <ul className="mt-4 space-y-4">
-                <li>
-                  <Link to="/opportunities" className="text-base text-gray-500 hover:text-gray-900">
-                    Browse Opportunities
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/submit" className="text-base text-gray-500 hover:text-gray-900">
-                    Submit Opportunity
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/tailor" className="text-base text-gray-500 hover:text-gray-900">
-                    AI Resume Tailor
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-gray-900 tracking-wider uppercase">
-                Support
-              </h3>
-              <ul className="mt-4 space-y-4">
-                <li>
-                  <Link to="/help" className="text-base text-gray-500 hover:text-gray-900">
-                    Help Center
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/contact" className="text-base text-gray-500 hover:text-gray-900">
-                    Contact Us
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/privacy" className="text-base text-gray-500 hover:text-gray-900">
-                    Privacy Policy
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-gray-900 tracking-wider uppercase">
-                Company
-              </h3>
-              <ul className="mt-4 space-y-4">
-                <li>
-                  <Link to="/about" className="text-base text-gray-500 hover:text-gray-900">
-                    About Us
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/blog" className="text-base text-gray-500 hover:text-gray-900">
-                    Blog
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/careers" className="text-base text-gray-500 hover:text-gray-900">
-                    Careers
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-gray-900 tracking-wider uppercase">
-                Connect
-              </h3>
-              <ul className="mt-4 space-y-4">
-                <li>
-                  <a href="https://twitter.com/opportunityhub" target="_blank" rel="noopener noreferrer" className="text-base text-gray-500 hover:text-gray-900">
-                    Twitter
-                  </a>
-                </li>
-                <li>
-                  <a href="https://linkedin.com/company/opportunityhub" target="_blank" rel="noopener noreferrer" className="text-base text-gray-500 hover:text-gray-900">
-                    LinkedIn
-                  </a>
-                </li>
-                <li>
-                  <a href="https://github.com/opportunityhub" target="_blank" rel="noopener noreferrer" className="text-base text-gray-500 hover:text-gray-900">
-                    GitHub
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div className="mt-8 border-t border-gray-200 pt-8">
-            <p className="text-base text-gray-400 text-center">
-              &copy; 2024 OpportunityHub. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 };
