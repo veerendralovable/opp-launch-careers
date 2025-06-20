@@ -39,14 +39,18 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const AdminLayout = ({ children }: { children: React.ReactNode }) => (
+interface LayoutProps {
+  children: React.ReactNode;
+}
+
+const AdminLayout: React.FC<LayoutProps> = ({ children }) => (
   <>
     <AdminNavigation />
     {children}
   </>
 );
 
-const ModeratorLayout = ({ children }: { children: React.ReactNode }) => (
+const ModeratorLayout: React.FC<LayoutProps> = ({ children }) => (
   <>
     <ModeratorNavigation />
     {children}
