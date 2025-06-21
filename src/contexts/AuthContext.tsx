@@ -68,12 +68,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error('Error fetching user role:', roleError);
         if (roleError.code === 'PGRST116') {
           console.log('No role found, assigning default user role');
-          // Assign default user role
+          // Assign default user role using the correct type
           const { error: insertError } = await supabase
             .from('user_roles')
             .insert({
               user_id: userId,
-              role: 'user'
+              role: 'user' as const
             });
           
           if (insertError) {
@@ -179,20 +179,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (pendingRole && pendingRole !== 'user') {
             console.log('Processing pending role:', pendingRole);
             
-            // Assign the pending role
+            // Validate the pending role is a valid role type
+            const validRoles = ['user', 'admin', 'moderator'] as const;
+            const roleToAssign = validRoles.includes(pendingRole as any) ? pendingRole as typeof validRoles[number] : 'user';
+            
+            // Assign the pending role using the secure function
             try {
-              const { error } = await supabase
-                .from('user_roles')
-                .upsert({
-                  user_id: session.user.id,
-                  role: pendingRole
-                }, {
-                  onConflict: 'user_id'
-                });
+              const { error } = await supabase.rpc('assign_user_role_secure', {
+                _user_id: session.user.id,
+                _role: roleToAssign
+              });
               
               if (!error) {
                 localStorage.removeItem('pendingUserRole');
-                setUserRole(pendingRole);
+                setUserRole(roleToAssign);
               } else {
                 console.error('Error assigning pending role:', error);
                 const role = await fetchUserRole(session.user.id);
