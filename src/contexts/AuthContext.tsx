@@ -88,9 +88,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (roleError) {
         console.error('Error fetching user role:', roleError);
         if (roleError.code === 'PGRST116') {
-          console.log('No role found for user, setting to user role');
-          setUserRole('user');
-          return 'user';
+          console.log('No role found for user, assigning default user role');
+          const success = await assignUserRoleSecure(userId, 'user');
+          if (success) {
+            setUserRole('user');
+            return 'user';
+          }
         }
         setUserRole('user');
         return 'user';

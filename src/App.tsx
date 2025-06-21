@@ -39,11 +39,7 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-interface LayoutWrapperProps {
-  children: React.ReactNode;
-}
-
-const AdminLayoutWrapper: React.FC<LayoutWrapperProps> = ({ children }) => (
+const AdminLayoutWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="min-h-screen bg-background">
     <AdminNavigation />
     <main>
@@ -52,7 +48,7 @@ const AdminLayoutWrapper: React.FC<LayoutWrapperProps> = ({ children }) => (
   </div>
 );
 
-const ModeratorLayoutWrapper: React.FC<LayoutWrapperProps> = ({ children }) => (
+const ModeratorLayoutWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="min-h-screen bg-background">
     <ModeratorNavigation />
     <main>
@@ -85,7 +81,9 @@ const App = () => (
             </Route>
 
             {/* Auth route without Layout */}
-            <Route path="/auth" element={<Auth />} />
+            <Route path="/auth" element={<Layout />}>
+              <Route index element={<Auth />} />
+            </Route>
             
             {/* Protected routes with Layout */}
             <Route path="/" element={<Layout />}>
