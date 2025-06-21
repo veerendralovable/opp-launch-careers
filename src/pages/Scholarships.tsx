@@ -24,11 +24,10 @@ const Scholarships = () => {
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card className="max-w-md">
-          <CardContent className="pt-6 text-center">
-            <p className="text-red-600">Error loading scholarships: {error}</p>
-          </CardContent>
-        </Card>
+        <div className="text-center">
+          <p className="text-red-600 mb-4">Error loading scholarships: {error}</p>
+          <Button onClick={() => window.location.reload()}>Try Again</Button>
+        </div>
       </div>
     );
   }

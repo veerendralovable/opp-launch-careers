@@ -7,22 +7,33 @@ import { useToast } from '@/hooks/use-toast';
 export const useBookmarks = () => {
   const [bookmarks, setBookmarks] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
 
   const fetchBookmarks = async () => {
-    if (!user) return;
+    if (!user) {
+      setBookmarks([]);
+      return;
+    }
     
     try {
-      const { data, error } = await supabase
+      setError(null);
+      const { data, error: fetchError } = await supabase
         .from('bookmarks')
         .select('opportunity_id')
         .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (fetchError) {
+        console.error('Error fetching bookmarks:', fetchError);
+        setError(fetchError.message);
+        return;
+      }
+      
       setBookmarks(data?.map(b => b.opportunity_id) || []);
     } catch (error: any) {
       console.error('Error fetching bookmarks:', error);
+      setError(error.message);
     }
   };
 
@@ -98,6 +109,7 @@ export const useBookmarks = () => {
           filter: `user_id=eq.${user.id}`,
         },
         () => {
+          console.log('Bookmarks changed, refetching...');
           fetchBookmarks();
         }
       )
@@ -108,5 +120,5 @@ export const useBookmarks = () => {
     };
   }, [user]);
 
-  return { bookmarks, toggleBookmark, loading };
+  return { bookmarks, toggleBookmark, loading, error };
 };

@@ -19,14 +19,19 @@ const Dashboard = () => {
   const [bookmarks, setBookmarks] = useState<any[]>([]);
   const [resumes, setResumes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
 
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
+        setError(null);
 
         // Fetch bookmarks
         const { data: bookmarksData, error: bookmarksError } = await supabase
@@ -46,7 +51,9 @@ const Dashboard = () => {
           .order('created_at', { ascending: false })
           .limit(5);
 
-        if (bookmarksError) throw bookmarksError;
+        if (bookmarksError) {
+          console.error('Error fetching bookmarks:', bookmarksError);
+        }
 
         // Fetch resumes
         const { data: resumesData, error: resumesError } = await supabase
@@ -56,12 +63,15 @@ const Dashboard = () => {
           .order('created_at', { ascending: false })
           .limit(5);
 
-        if (resumesError) throw resumesError;
+        if (resumesError) {
+          console.error('Error fetching resumes:', resumesError);
+        }
 
         setBookmarks(bookmarksData || []);
         setResumes(resumesData || []);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching dashboard data:', error);
+        setError(error.message || 'Failed to load dashboard data');
       } finally {
         setLoading(false);
       }
@@ -76,6 +86,30 @@ const Dashboard = () => {
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
           <p className="text-gray-600">Loading your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">Error: {error}</p>
+          <Button onClick={() => window.location.reload()}>Try Again</Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600 mb-4">Please sign in to view your dashboard</p>
+          <Link to="/auth">
+            <Button>Sign In</Button>
+          </Link>
         </div>
       </div>
     );

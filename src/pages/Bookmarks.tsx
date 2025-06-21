@@ -20,15 +20,21 @@ import { useToast } from '@/hooks/use-toast';
 const Bookmarks = () => {
   const [bookmarkedOpportunities, setBookmarkedOpportunities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
 
   const fetchBookmarks = async () => {
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
 
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      setError(null);
+      
+      const { data, error: fetchError } = await supabase
         .from('bookmarks')
         .select(`
           id,
@@ -49,11 +55,16 @@ const Bookmarks = () => {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (fetchError) {
+        console.error('Error fetching bookmarks:', fetchError);
+        setError(fetchError.message);
+        return;
+      }
 
       setBookmarkedOpportunities(data || []);
     } catch (error: any) {
       console.error('Error fetching bookmarks:', error);
+      setError(error.message || 'Failed to fetch bookmarks');
       toast({
         title: "Error",
         description: "Failed to fetch bookmarks",
@@ -122,6 +133,30 @@ const Bookmarks = () => {
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
           <p className="text-gray-600">Loading your bookmarks...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">Error: {error}</p>
+          <Button onClick={fetchBookmarks}>Try Again</Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600 mb-4">Please sign in to view your bookmarks</p>
+          <Link to="/auth">
+            <Button>Sign In</Button>
+          </Link>
         </div>
       </div>
     );

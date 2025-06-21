@@ -17,6 +17,8 @@ export const useOpportunities = (filters?: {
   const fetchOpportunities = async () => {
     try {
       setLoading(true);
+      setError(null);
+      
       let query = supabase
         .from('opportunities')
         .select('*')
@@ -36,12 +38,18 @@ export const useOpportunities = (filters?: {
         query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%,company.ilike.%${filters.search}%`);
       }
 
-      const { data, error } = await query;
+      const { data, error: fetchError } = await query;
 
-      if (error) throw error;
+      if (fetchError) {
+        console.error('Error fetching opportunities:', fetchError);
+        setError(fetchError.message);
+        return;
+      }
+      
       setOpportunities(data || []);
     } catch (err: any) {
-      setError(err.message);
+      console.error('Error in fetchOpportunities:', err);
+      setError(err.message || 'Failed to fetch opportunities');
     } finally {
       setLoading(false);
     }
@@ -63,6 +71,7 @@ export const useOpportunities = (filters?: {
           table: 'opportunities',
         },
         () => {
+          console.log('Opportunities table changed, refetching...');
           fetchOpportunities();
         }
       )
