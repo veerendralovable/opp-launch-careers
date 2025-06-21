@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { validatePasswordStrength, createRateLimiter } from '@/config/security';
+import { useToast } from '@/hooks/use-toast';
 
 interface AuthContextType {
   user: User | null;
@@ -12,6 +13,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, name?: string, requestedRole?: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<{ error: any }>;
+  refreshUserRole: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -25,17 +27,17 @@ export const useAuth = () => {
 };
 
 // Rate limiter for login attempts
-const loginRateLimiter = createRateLimiter(5, 15 * 60 * 1000); // 5 attempts per 15 minutes
+const loginRateLimiter = createRateLimiter(5, 15 * 60 * 1000);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const cleanupAuthState = () => {
     try {
-      // Clean up all auth-related localStorage items
       const keysToRemove = Object.keys(localStorage).filter(key => 
         key.startsWith('supabase.auth.') || 
         key.includes('sb-') ||
@@ -55,7 +57,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const assignUserRoleSecure = async (userId: string, role: 'user' | 'admin' | 'moderator') => {
     try {
-      console.log('Using secure role assignment for:', role, 'to user:', userId);
+      console.log('Assigning role:', role, 'to user:', userId);
       
       const { data, error } = await supabase.rpc('assign_user_role_secure', {
         _user_id: userId,
@@ -63,7 +65,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       
       if (error) {
-        console.error('Error in secure role assignment:', error);
+        console.error('Error in role assignment:', error);
         return false;
       }
       
@@ -88,7 +90,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (roleError) {
         console.error('Error fetching user role:', roleError);
         if (roleError.code === 'PGRST116') {
-          console.log('No role found for user, assigning default user role');
+          console.log('No role found, assigning default user role');
           const success = await assignUserRoleSecure(userId, 'user');
           if (success) {
             setUserRole('user');
@@ -100,7 +102,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       const role = roleData?.role || 'user';
-      console.log('User role fetched successfully:', role);
+      console.log('User role fetched:', role);
       setUserRole(role);
       return role;
     } catch (error: any) {
@@ -110,39 +112,74 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const refreshUserRole = async () => {
+    if (user) {
+      await fetchUserRole(user.id);
+    }
+  };
+
   useEffect(() => {
     let mounted = true;
-    let processingAuth = false;
+    let authProcessing = false;
 
+    const initializeAuth = async () => {
+      if (authProcessing || isInitialized) return;
+      authProcessing = true;
+
+      try {
+        // Get initial session
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        
+        if (!mounted) return;
+
+        if (initialSession?.user) {
+          setSession(initialSession);
+          setUser(initialSession.user);
+          await fetchUserRole(initialSession.user.id);
+        } else {
+          setSession(null);
+          setUser(null);
+          setUserRole(null);
+        }
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+      } finally {
+        if (mounted) {
+          setLoading(false);
+          setIsInitialized(true);
+          authProcessing = false;
+        }
+      }
+    };
+
+    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email);
+        console.log('Auth event:', event, session?.user?.email);
         
-        if (!mounted || processingAuth) {
-          console.log('Skipping auth state change - not mounted or already processing');
-          return;
-        }
-
-        processingAuth = true;
+        if (!mounted || authProcessing) return;
+        authProcessing = true;
 
         try {
           setSession(session);
           setUser(session?.user ?? null);
 
           if (session?.user) {
+            // Handle pending role assignment
             const pendingRole = localStorage.getItem('pendingUserRole');
             
             if (pendingRole && pendingRole !== 'user') {
-              console.log('Processing pending role assignment:', pendingRole);
+              console.log('Processing pending role:', pendingRole);
               
-              const success = await assignUserRoleSecure(session.user.id, pendingRole as 'user' | 'admin' | 'moderator');
+              const success = await assignUserRoleSecure(
+                session.user.id, 
+                pendingRole as 'user' | 'admin' | 'moderator'
+              );
               
               if (success) {
                 localStorage.removeItem('pendingUserRole');
                 setUserRole(pendingRole);
-                console.log('Pending role assignment successful:', pendingRole);
               } else {
-                console.error('Failed to assign pending role, fetching existing role');
                 await fetchUserRole(session.user.id);
               }
             } else {
@@ -153,33 +190,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         } catch (error) {
           console.error('Error in auth state change handler:', error);
-          setUserRole('user');
         } finally {
-          processingAuth = false;
-          if (mounted) {
+          authProcessing = false;
+          if (mounted && !loading) {
             setLoading(false);
           }
         }
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (mounted && !processingAuth) {
-        console.log('Initial session:', session?.user?.email);
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          processingAuth = true;
-          fetchUserRole(session.user.id).finally(() => {
-            processingAuth = false;
-            if (mounted) setLoading(false);
-          });
-        } else {
-          setLoading(false);
-        }
-      }
-    });
+    // Initialize auth
+    initializeAuth();
 
     return () => {
       mounted = false;
@@ -189,18 +210,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUp = async (email: string, password: string, name?: string, requestedRole?: string) => {
     try {
-      // Validate input
       if (!email || !password) {
         return { error: { message: 'Email and password are required' } };
       }
 
-      // Validate email format
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
         return { error: { message: 'Please enter a valid email address' } };
       }
 
-      // Validate password strength
       const passwordValidation = validatePasswordStrength(password);
       if (!passwordValidation.isValid) {
         return { error: { message: passwordValidation.errors.join(', ') } };
@@ -209,7 +227,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const redirectUrl = `${window.location.origin}/`;
       
       if (requestedRole && requestedRole !== 'user') {
-        console.log('Storing pending role for post-verification assignment:', requestedRole);
+        console.log('Storing pending role:', requestedRole);
         localStorage.setItem('pendingUserRole', requestedRole);
       }
       
@@ -233,13 +251,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     try {
-      // Rate limiting check
-      const clientIP = 'client'; // In production, you'd get the real IP
+      const clientIP = 'client';
       if (!loginRateLimiter(clientIP)) {
         return { error: { message: 'Too many login attempts. Please try again later.' } };
       }
 
-      // Validate input
       if (!email || !password) {
         return { error: { message: 'Email and password are required' } };
       }
@@ -256,7 +272,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw error;
       }
       
-      console.log('Sign in successful for user:', data.user?.email);
+      console.log('Sign in successful:', data.user?.email);
       return { error: null };
     } catch (error: any) {
       console.error('Sign in error:', error);
@@ -270,7 +286,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { error } = await supabase.auth.signOut({ scope: 'global' });
       setUserRole(null);
       
-      // Use replace instead of href to prevent navigation issues
       setTimeout(() => {
         window.location.replace('/');
       }, 100);
@@ -290,6 +305,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signUp,
     signIn,
     signOut,
+    refreshUserRole,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

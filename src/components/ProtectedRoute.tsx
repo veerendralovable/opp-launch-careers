@@ -24,6 +24,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   console.log('ProtectedRoute - user:', user?.email, 'userRole:', userRole, 'loading:', loading);
   console.log('ProtectedRoute - requireAuth:', requireAuth, 'requireAdmin:', requireAdmin, 'requireModerator:', requireModerator);
 
+  // Show loading state while auth is being determined
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -35,11 +36,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
+  // Check authentication requirement
   if (requireAuth && !user) {
     console.log('Redirecting to auth - no user');
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
+  // Check admin requirement
   if (requireAdmin && userRole !== 'admin') {
     console.log('Access denied - admin required, user role:', userRole);
     return (
@@ -52,7 +55,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
               You don't have permission to access this area. Admin privileges are required.
             </p>
             <p className="text-sm text-gray-500">
-              If you believe this is an error, please contact your administrator.
+              Current role: {userRole || 'None'} • Required: Admin
             </p>
           </CardContent>
         </Card>
@@ -60,6 +63,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
+  // Check moderator requirement
   if (requireModerator && !['moderator', 'admin'].includes(userRole || '')) {
     console.log('Access denied - moderator required, user role:', userRole);
     return (
@@ -72,7 +76,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
               You don't have permission to access this area. Moderator or Admin privileges are required.
             </p>
             <p className="text-sm text-gray-500">
-              If you believe this is an error, please contact your administrator.
+              Current role: {userRole || 'None'} • Required: Moderator or Admin
             </p>
           </CardContent>
         </Card>

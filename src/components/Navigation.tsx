@@ -14,7 +14,9 @@ import {
   GraduationCap,
   LogOut,
   Menu,
-  X
+  X,
+  Shield,
+  Eye
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -46,7 +48,46 @@ const Navigation = () => {
     { href: '/scholarships', label: 'Scholarships', icon: GraduationCap },
   ];
 
-  const navItems = user ? userNavItems : publicNavItems;
+  const moderatorNavItems = [
+    { href: '/moderator', label: 'Mod Dashboard', icon: Eye },
+    { href: '/moderator/opportunities', label: 'Review Queue', icon: FileText },
+    { href: '/moderator/users', label: 'User Management', icon: User },
+    { href: '/opportunities', label: 'Live Opportunities', icon: FileText },
+  ];
+
+  const adminNavItems = [
+    { href: '/admin', label: 'Admin Dashboard', icon: Shield },
+    { href: '/admin/opportunities', label: 'Content Review', icon: FileText },
+    { href: '/admin/users', label: 'User Management', icon: User },
+    { href: '/admin/analytics', label: 'Analytics', icon: Settings },
+    { href: '/admin/settings', label: 'Settings', icon: Settings },
+  ];
+
+  const getNavItems = () => {
+    if (!user) return publicNavItems;
+    
+    switch (userRole) {
+      case 'admin':
+        return adminNavItems;
+      case 'moderator':
+        return moderatorNavItems;
+      default:
+        return userNavItems;
+    }
+  };
+
+  const navItems = getNavItems();
+
+  const getRoleDisplay = () => {
+    switch (userRole) {
+      case 'admin':
+        return { text: 'Admin', color: 'bg-red-100 text-red-800' };
+      case 'moderator':
+        return { text: 'Moderator', color: 'bg-blue-100 text-blue-800' };
+      default:
+        return { text: 'User', color: 'bg-gray-100 text-gray-800' };
+    }
+  };
 
   return (
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
@@ -81,14 +122,18 @@ const Navigation = () => {
           <div className="hidden md:flex md:items-center md:space-x-4">
             {user ? (
               <div className="flex items-center space-x-4">
-                <span className="text-sm text-gray-700">
-                  Welcome, {user.email}
-                </span>
-                {userRole && (
-                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                    {userRole}
-                  </span>
-                )}
+                <div className="text-right">
+                  <div className="text-sm text-gray-700">
+                    Welcome, {user.email}
+                  </div>
+                  {userRole && (
+                    <div className="flex justify-end mt-1">
+                      <span className={`text-xs px-2 py-1 rounded ${getRoleDisplay().color}`}>
+                        {getRoleDisplay().text}
+                      </span>
+                    </div>
+                  )}
+                </div>
                 <Button onClick={handleSignOut} variant="outline" size="sm">
                   <LogOut className="h-4 w-4 mr-2" />
                   Sign Out
@@ -135,16 +180,16 @@ const Navigation = () => {
               
               {user ? (
                 <div className="border-t pt-3 mt-3">
-                  <div className="px-3 py-2 text-sm text-gray-700">
-                    {user.email}
-                  </div>
-                  {userRole && (
-                    <div className="px-3 py-1">
-                      <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                        {userRole}
-                      </span>
+                  <div className="px-3 py-2">
+                    <div className="text-sm text-gray-700 mb-2">
+                      {user.email}
                     </div>
-                  )}
+                    {userRole && (
+                      <span className={`text-xs px-2 py-1 rounded ${getRoleDisplay().color}`}>
+                        {getRoleDisplay().text}
+                      </span>
+                    )}
+                  </div>
                   <button
                     onClick={handleSignOut}
                     className="w-full text-left flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md"
