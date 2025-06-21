@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,20 +19,24 @@ import { useToast } from '@/hooks/use-toast';
 
 const Bookmarks = () => {
   const [bookmarkedOpportunities, setBookmarkedOpportunities] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [initialized, setInitialized] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const fetchBookmarks = async () => {
+  const fetchBookmarks = useCallback(async () => {
     if (!user) {
       setLoading(false);
+      setInitialized(true);
       return;
     }
 
     try {
       setLoading(true);
       setError(null);
+      
+      console.log('Fetching bookmarks for user:', user.id);
       
       const { data, error: fetchError } = await supabase
         .from('bookmarks')
@@ -61,6 +65,7 @@ const Bookmarks = () => {
         return;
       }
 
+      console.log('Bookmarks fetched successfully:', data?.length);
       setBookmarkedOpportunities(data || []);
     } catch (error: any) {
       console.error('Error fetching bookmarks:', error);
@@ -72,8 +77,9 @@ const Bookmarks = () => {
       });
     } finally {
       setLoading(false);
+      setInitialized(true);
     }
-  };
+  }, [user?.id, toast]);
 
   const handleRemoveBookmark = async (bookmarkId: string) => {
     try {
@@ -101,9 +107,12 @@ const Bookmarks = () => {
     }
   };
 
+  // Initial fetch
   useEffect(() => {
-    fetchBookmarks();
-  }, [user]);
+    if (!initialized) {
+      fetchBookmarks();
+    }
+  }, [initialized, fetchBookmarks]);
 
   const getTypeColor = (type: string) => {
     switch (type) {
@@ -127,7 +136,7 @@ const Bookmarks = () => {
     return `${diffDays} days left`;
   };
 
-  if (loading) {
+  if (loading && !initialized) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">

@@ -11,76 +11,85 @@ import {
   ExternalLink,
   Loader2
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
 const Dashboard = () => {
   const [bookmarks, setBookmarks] = useState<any[]>([]);
   const [resumes, setResumes] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [initialized, setInitialized] = useState(false);
   const { user } = useAuth();
 
-  useEffect(() => {
+  const fetchDashboardData = useCallback(async () => {
     if (!user) {
       setLoading(false);
+      setInitialized(true);
       return;
     }
 
-    const fetchDashboardData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+    try {
+      setLoading(true);
+      setError(null);
 
-        // Fetch bookmarks
-        const { data: bookmarksData, error: bookmarksError } = await supabase
-          .from('bookmarks')
-          .select(`
+      console.log('Fetching dashboard data for user:', user.id);
+
+      // Fetch bookmarks
+      const { data: bookmarksData, error: bookmarksError } = await supabase
+        .from('bookmarks')
+        .select(`
+          id,
+          created_at,
+          opportunities (
             id,
-            created_at,
-            opportunities (
-              id,
-              title,
-              type,
-              deadline,
-              company
-            )
-          `)
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(5);
+            title,
+            type,
+            deadline,
+            company
+          )
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
 
-        if (bookmarksError) {
-          console.error('Error fetching bookmarks:', bookmarksError);
-        }
-
-        // Fetch resumes
-        const { data: resumesData, error: resumesError } = await supabase
-          .from('resumes')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(5);
-
-        if (resumesError) {
-          console.error('Error fetching resumes:', resumesError);
-        }
-
-        setBookmarks(bookmarksData || []);
-        setResumes(resumesData || []);
-      } catch (error: any) {
-        console.error('Error fetching dashboard data:', error);
-        setError(error.message || 'Failed to load dashboard data');
-      } finally {
-        setLoading(false);
+      if (bookmarksError) {
+        console.error('Error fetching bookmarks:', bookmarksError);
       }
-    };
 
-    fetchDashboardData();
-  }, [user]);
+      // Fetch resumes
+      const { data: resumesData, error: resumesError } = await supabase
+        .from('resumes')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
 
-  if (loading) {
+      if (resumesError) {
+        console.error('Error fetching resumes:', resumesError);
+      }
+
+      setBookmarks(bookmarksData || []);
+      setResumes(resumesData || []);
+      console.log('Dashboard data fetched successfully');
+    } catch (error: any) {
+      console.error('Error fetching dashboard data:', error);
+      setError(error.message || 'Failed to load dashboard data');
+    } finally {
+      setLoading(false);
+      setInitialized(true);
+    }
+  }, [user?.id]);
+
+  // Initial data fetch
+  useEffect(() => {
+    if (!initialized) {
+      fetchDashboardData();
+    }
+  }, [initialized, fetchDashboardData]);
+
+  if (loading && !initialized) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">

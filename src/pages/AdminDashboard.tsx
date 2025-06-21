@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -26,16 +26,11 @@ const AdminDashboard = () => {
     activeUsers: 0,
     recentActivity: 0
   });
+  const [initialized, setInitialized] = useState(false);
 
-  useEffect(() => {
-    if (isAdmin) {
-      fetchSystemStats();
-      setupRealTimeUpdates();
-    }
-  }, [isAdmin]);
-
-  const fetchSystemStats = async () => {
+  const fetchSystemStats = useCallback(async () => {
     try {
+      console.log('Fetching system stats...');
       const { data: profiles, error } = await supabase
         .from('profiles')
         .select('id, created_at');
@@ -49,13 +44,18 @@ const AdminDashboard = () => {
           activeUsers: profiles.filter(p => new Date(p.created_at) > lastWeek).length,
           recentActivity: profiles.filter(p => new Date(p.created_at) > lastWeek).length
         });
+        console.log('System stats fetched successfully');
       }
     } catch (error) {
       console.error('Error fetching system stats:', error);
     }
-  };
+  }, []);
 
-  const setupRealTimeUpdates = () => {
+  const setupRealTimeUpdates = useCallback(() => {
+    if (!isAdmin || initialized) return;
+
+    console.log('Setting up real-time updates for admin dashboard');
+
     const opportunitiesChannel = supabase
       .channel('admin-opportunities-realtime')
       .on(
@@ -67,7 +67,9 @@ const AdminDashboard = () => {
         },
         () => {
           console.log('Real-time opportunity update received');
-          refetch();
+          setTimeout(() => {
+            refetch();
+          }, 1000);
         }
       )
       .subscribe();
@@ -83,8 +85,10 @@ const AdminDashboard = () => {
         },
         () => {
           console.log('Real-time user role update received');
-          refetchUsers();
-          fetchSystemStats();
+          setTimeout(() => {
+            refetchUsers();
+            fetchSystemStats();
+          }, 1000);
         }
       )
       .subscribe();
@@ -93,7 +97,21 @@ const AdminDashboard = () => {
       supabase.removeChannel(opportunitiesChannel);
       supabase.removeChannel(usersChannel);
     };
-  };
+  }, [isAdmin, initialized, refetch, refetchUsers, fetchSystemStats]);
+
+  useEffect(() => {
+    if (isAdmin && !initialized) {
+      fetchSystemStats();
+      setInitialized(true);
+    }
+  }, [isAdmin, initialized, fetchSystemStats]);
+
+  useEffect(() => {
+    if (isAdmin && initialized) {
+      const cleanup = setupRealTimeUpdates();
+      return cleanup;
+    }
+  }, [isAdmin, initialized, setupRealTimeUpdates]);
 
   if (!isAdmin) {
     return (

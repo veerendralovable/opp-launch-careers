@@ -8,7 +8,9 @@ import { Calendar, MapPin, Building, ExternalLink, Loader2, GraduationCap } from
 import { Link } from 'react-router-dom';
 
 const Scholarships = () => {
-  const { opportunities, loading, error } = useOpportunities({ type: 'Scholarship' });
+  // Use static filters to prevent infinite loops
+  const scholarshipFilters = { type: 'Scholarship' };
+  const { opportunities, loading, error } = useOpportunities(scholarshipFilters);
 
   if (loading) {
     return (

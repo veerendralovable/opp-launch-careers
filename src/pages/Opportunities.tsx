@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,15 +8,18 @@ import { Badge } from '@/components/ui/badge';
 import { useOpportunities } from '@/hooks/useOpportunities';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import { useAnalytics } from '@/hooks/useAnalytics';
-import { Calendar, MapPin, Building, ExternalLink, Heart, Search, Filter, Bookmark, Loader2 } from 'lucide-react';
+import { Calendar, MapPin, Building, ExternalLink, Search, Filter, Bookmark, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Opportunities = () => {
-  const [filters, setFilters] = useState({
+  const [localFilters, setLocalFilters] = useState({
     type: 'All',
     domain: 'All',
     search: ''
   });
+
+  // Memoize filters to prevent unnecessary re-renders
+  const filters = useMemo(() => localFilters, [localFilters.type, localFilters.domain, localFilters.search]);
 
   const { opportunities, loading, error } = useOpportunities(filters);
   const { bookmarks, toggleBookmark } = useBookmarks();
@@ -24,14 +27,14 @@ const Opportunities = () => {
 
   // Track search and filter usage
   const handleSearch = (searchTerm: string) => {
-    setFilters({ ...filters, search: searchTerm });
+    setLocalFilters(prev => ({ ...prev, search: searchTerm }));
     if (searchTerm) {
       trackEvent('search_performed', { query: searchTerm });
     }
   };
 
   const handleFilterChange = (filterType: string, value: string) => {
-    setFilters({ ...filters, [filterType]: value });
+    setLocalFilters(prev => ({ ...prev, [filterType]: value }));
     trackEvent('filter_applied', { filter_type: filterType, filter_value: value });
   };
 
@@ -57,15 +60,13 @@ const Opportunities = () => {
     toggleBookmark(opportunityId);
   };
 
-  // Track page engagement
+  // Track page engagement - only once when component mounts
   useEffect(() => {
-    if (!loading) {
-      trackEvent('opportunities_page_loaded', {
-        total_opportunities: opportunities.length,
-        active_filters: Object.entries(filters).filter(([key, value]) => value && value !== 'All').length
-      });
-    }
-  }, [opportunities.length, loading]);
+    trackEvent('opportunities_page_loaded', {
+      total_opportunities: opportunities.length,
+      active_filters: Object.entries(filters).filter(([key, value]) => value && value !== 'All').length
+    });
+  }, []); // Empty dependency array - only run once
 
   const typeOptions = ['All', 'Internship', 'Contest', 'Event', 'Scholarship'];
   const domainOptions = ['All', 'Technology', 'Finance', 'Healthcare', 'Marketing', 'Design', 'Engineering', 'Business', 'Education', 'Other'];
@@ -114,14 +115,14 @@ const Opportunities = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
                 placeholder="Search opportunities..."
-                value={filters.search}
+                value={localFilters.search}
                 onChange={(e) => handleSearch(e.target.value)}
                 className="pl-10"
               />
             </div>
             
             <div className="flex gap-4">
-              <Select value={filters.type} onValueChange={(value) => handleFilterChange('type', value)}>
+              <Select value={localFilters.type} onValueChange={(value) => handleFilterChange('type', value)}>
                 <SelectTrigger className="w-[180px]">
                   <Filter className="mr-2 h-4 w-4" />
                   <SelectValue placeholder="Type" />
@@ -133,7 +134,7 @@ const Opportunities = () => {
                 </SelectContent>
               </Select>
               
-              <Select value={filters.domain} onValueChange={(value) => handleFilterChange('domain', value)}>
+              <Select value={localFilters.domain} onValueChange={(value) => handleFilterChange('domain', value)}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Domain" />
                 </SelectTrigger>
