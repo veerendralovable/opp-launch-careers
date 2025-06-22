@@ -46,6 +46,7 @@ const Navigation = () => {
     { href: '/tailor', label: 'Tailor Resume', icon: Settings },
     { href: '/bookmarks', label: 'Bookmarks', icon: Bookmark },
     { href: '/scholarships', label: 'Scholarships', icon: GraduationCap },
+    { href: '/profile', label: 'Profile', icon: User },
   ];
 
   const moderatorNavItems = [
@@ -53,6 +54,7 @@ const Navigation = () => {
     { href: '/moderator/opportunities', label: 'Review Queue', icon: FileText },
     { href: '/moderator/users', label: 'User Management', icon: User },
     { href: '/opportunities', label: 'Live Opportunities', icon: FileText },
+    { href: '/profile', label: 'Profile', icon: User },
   ];
 
   const adminNavItems = [
@@ -61,6 +63,7 @@ const Navigation = () => {
     { href: '/admin/users', label: 'User Management', icon: User },
     { href: '/admin/analytics', label: 'Analytics', icon: Settings },
     { href: '/admin/settings', label: 'Settings', icon: Settings },
+    { href: '/profile', label: 'Profile', icon: User },
   ];
 
   const getNavItems = () => {

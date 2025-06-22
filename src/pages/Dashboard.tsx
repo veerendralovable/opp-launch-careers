@@ -9,9 +9,10 @@ import {
   TrendingUp, 
   Calendar,
   ExternalLink,
-  Loader2
+  Loader2,
+  User
 } from "lucide-react";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -21,22 +22,24 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const fetchInProgressRef = useRef(false);
 
   const fetchDashboardData = useCallback(async () => {
-    if (!user) {
+    if (!user || fetchInProgressRef.current) {
       setLoading(false);
       setInitialized(true);
       return;
     }
 
     try {
+      fetchInProgressRef.current = true;
       setLoading(true);
       setError(null);
 
       console.log('Fetching dashboard data for user:', user.id);
 
-      // Fetch bookmarks
+      // Fetch bookmarks with opportunities data
       const { data: bookmarksData, error: bookmarksError } = await supabase
         .from('bookmarks')
         .select(`
@@ -56,6 +59,8 @@ const Dashboard = () => {
 
       if (bookmarksError) {
         console.error('Error fetching bookmarks:', bookmarksError);
+      } else {
+        console.log('Bookmarks fetched:', bookmarksData?.length || 0);
       }
 
       // Fetch resumes
@@ -68,6 +73,8 @@ const Dashboard = () => {
 
       if (resumesError) {
         console.error('Error fetching resumes:', resumesError);
+      } else {
+        console.log('Resumes fetched:', resumesData?.length || 0);
       }
 
       setBookmarks(bookmarksData || []);
@@ -79,17 +86,32 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
       setInitialized(true);
+      fetchInProgressRef.current = false;
     }
   }, [user?.id]);
 
-  // Initial data fetch
+  // Initial data fetch - only when user is available and not already initialized
   useEffect(() => {
-    if (!initialized) {
+    if (user && !initialized && !authLoading) {
       fetchDashboardData();
+    } else if (!user && !authLoading) {
+      setInitialized(true);
+      setLoading(false);
     }
-  }, [initialized, fetchDashboardData]);
+  }, [user, initialized, authLoading, fetchDashboardData]);
 
-  if (loading && !initialized) {
+  // Reset state when user changes
+  useEffect(() => {
+    if (!authLoading) {
+      setInitialized(false);
+      setBookmarks([]);
+      setResumes([]);
+      setError(null);
+      fetchInProgressRef.current = false;
+    }
+  }, [user?.id, authLoading]);
+
+  if (authLoading || (loading && !initialized)) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -105,7 +127,12 @@ const Dashboard = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-600 mb-4">Error: {error}</p>
-          <Button onClick={() => window.location.reload()}>Try Again</Button>
+          <Button onClick={() => {
+            setError(null);
+            setInitialized(false);
+          }}>
+            Try Again
+          </Button>
         </div>
       </div>
     );
@@ -114,12 +141,16 @@ const Dashboard = () => {
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-600 mb-4">Please sign in to view your dashboard</p>
-          <Link to="/auth">
-            <Button>Sign In</Button>
-          </Link>
-        </div>
+        <Card className="max-w-md w-full">
+          <CardContent className="pt-6 text-center">
+            <User className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Please Sign In</h2>
+            <p className="text-gray-600 mb-4">You need to be signed in to view your dashboard.</p>
+            <Link to="/auth">
+              <Button className="w-full">Sign In</Button>
+            </Link>
+          </CardContent>
+        </Card>
       </div>
     );
   }

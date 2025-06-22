@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -16,20 +17,29 @@ export const useUserRoles = () => {
   const [loading, setLoading] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isModerator, setIsModerator] = useState(false);
+  const [initialized, setInitialized] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
+  const fetchInProgressRef = useRef(false);
 
-  const checkUserStatus = async () => {
-    if (!user) return;
+  const checkUserStatus = useCallback(async () => {
+    if (!user || fetchInProgressRef.current) return;
     
     try {
+      fetchInProgressRef.current = true;
+      console.log('Checking user status for:', user.id);
+
       // Check admin status using secure function
       const { data: adminData, error: adminError } = await supabase.rpc('is_admin', {
         _user_id: user.id
       });
       
-      if (adminError) throw adminError;
-      setIsAdmin(adminData);
+      if (adminError) {
+        console.error('Error checking admin status:', adminError);
+        setIsAdmin(false);
+      } else {
+        setIsAdmin(adminData || false);
+      }
 
       // Check moderator status using secure function
       const { data: moderatorData, error: moderatorError } = await supabase.rpc('has_role', {
@@ -37,34 +47,51 @@ export const useUserRoles = () => {
         _role: 'moderator'
       });
       
-      if (moderatorError) throw moderatorError;
-      setIsModerator(moderatorData);
+      if (moderatorError) {
+        console.error('Error checking moderator status:', moderatorError);
+        setIsModerator(false);
+      } else {
+        setIsModerator(moderatorData || false);
+      }
+
+      console.log('User status checked - Admin:', adminData, 'Moderator:', moderatorData);
     } catch (error: any) {
       console.error('Error checking user status:', error);
       setIsAdmin(false);
       setIsModerator(false);
+    } finally {
+      fetchInProgressRef.current = false;
     }
-  };
+  }, [user?.id]);
 
-  const fetchUsers = async () => {
-    if (!isAdmin && !isModerator) return;
+  const fetchUsers = useCallback(async () => {
+    if ((!isAdmin && !isModerator) || fetchInProgressRef.current) return;
 
     setLoading(true);
     try {
+      fetchInProgressRef.current = true;
+      console.log('Fetching users for management');
+
       // Fetch profiles (public data)
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (profilesError) throw profilesError;
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        throw profilesError;
+      }
 
       // Fetch user roles (with RLS protection)
       const { data: userRoles, error: rolesError } = await supabase
         .from('user_roles')
         .select('*');
 
-      if (rolesError) throw rolesError;
+      if (rolesError) {
+        console.error('Error fetching user roles:', rolesError);
+        throw rolesError;
+      }
 
       // Combine the data
       const usersWithRoles = profiles?.map(profile => ({
@@ -72,6 +99,7 @@ export const useUserRoles = () => {
         user_roles: userRoles?.filter(role => role.user_id === profile.id) || []
       })) || [];
 
+      console.log('Users fetched successfully:', usersWithRoles.length);
       setUsers(usersWithRoles);
     } catch (error: any) {
       console.error('Error fetching users:', error);
@@ -82,8 +110,9 @@ export const useUserRoles = () => {
       });
     } finally {
       setLoading(false);
+      fetchInProgressRef.current = false;
     }
-  };
+  }, [isAdmin, isModerator, toast]);
 
   const assignRole = async (userId: string, role: 'user' | 'admin' | 'moderator') => {
     if (!user || (!isAdmin && !isModerator)) return;
@@ -99,6 +128,8 @@ export const useUserRoles = () => {
     }
 
     try {
+      console.log('Assigning role:', role, 'to user:', userId);
+
       // Use the secure database function for role assignment
       const { error } = await supabase.rpc('assign_user_role', {
         _user_id: userId,
@@ -137,6 +168,8 @@ export const useUserRoles = () => {
     }
 
     try {
+      console.log('Removing role:', role, 'from user:', userId);
+
       // Assign 'user' role instead of removing (ensures every user has a role)
       const { error } = await supabase.rpc('assign_user_role', {
         _user_id: userId,
@@ -161,22 +194,29 @@ export const useUserRoles = () => {
     }
   };
 
+  // Check user status when user changes
   useEffect(() => {
-    if (user) {
-      checkUserStatus();
+    if (user && !initialized) {
+      checkUserStatus().then(() => setInitialized(true));
+    } else if (!user) {
+      setIsAdmin(false);
+      setIsModerator(false);
+      setInitialized(true);
     }
-  }, [user]);
+  }, [user, initialized, checkUserStatus]);
 
+  // Fetch users when admin/moderator status changes
   useEffect(() => {
-    if (isAdmin || isModerator) {
+    if (initialized && (isAdmin || isModerator)) {
       fetchUsers();
     }
-  }, [isAdmin, isModerator]);
+  }, [initialized, isAdmin, isModerator, fetchUsers]);
 
   // Set up real-time subscription for user roles
   useEffect(() => {
-    if (!isAdmin && !isModerator) return;
+    if (!initialized || (!isAdmin && !isModerator)) return;
 
+    console.log('Setting up user roles real-time subscription');
     const channel = supabase
       .channel('user-roles-changes')
       .on(
@@ -186,16 +226,20 @@ export const useUserRoles = () => {
           schema: 'public',
           table: 'user_roles',
         },
-        () => {
-          fetchUsers();
+        (payload) => {
+          console.log('User roles changed:', payload);
+          setTimeout(() => {
+            fetchUsers();
+          }, 1000);
         }
       )
       .subscribe();
 
     return () => {
+      console.log('Cleaning up user roles subscription');
       supabase.removeChannel(channel);
     };
-  }, [isAdmin, isModerator]);
+  }, [initialized, isAdmin, isModerator, fetchUsers]);
 
   return {
     users,
