@@ -1,5 +1,4 @@
 
-import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +15,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useState, useEffect, useCallback } from "react";
 
 const Bookmarks = () => {
   const [bookmarkedOpportunities, setBookmarkedOpportunities] = useState<any[]>([]);
@@ -25,9 +25,9 @@ const Bookmarks = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const fetchBookmarks = useCallback(async () => {
+  const fetchBookmarksWithDetails = useCallback(async () => {
     if (!user) {
-      setLoading(false);
+      setBookmarkedOpportunities([]);
       setInitialized(true);
       return;
     }
@@ -36,7 +36,7 @@ const Bookmarks = () => {
       setLoading(true);
       setError(null);
       
-      console.log('Fetching bookmarks for user:', user.id);
+      console.log('Fetching detailed bookmarks for user:', user.id);
       
       const { data, error: fetchError } = await supabase
         .from('bookmarks')
@@ -65,7 +65,7 @@ const Bookmarks = () => {
         return;
       }
 
-      console.log('Bookmarks fetched successfully:', data?.length);
+      console.log('Detailed bookmarks fetched successfully:', data?.length);
       setBookmarkedOpportunities(data || []);
     } catch (error: any) {
       console.error('Error fetching bookmarks:', error);
@@ -107,12 +107,15 @@ const Bookmarks = () => {
     }
   };
 
-  // Initial fetch
+  // Initial fetch when user is available
   useEffect(() => {
-    if (!initialized) {
-      fetchBookmarks();
+    if (user && !initialized) {
+      fetchBookmarksWithDetails();
+    } else if (!user) {
+      setBookmarkedOpportunities([]);
+      setInitialized(true);
     }
-  }, [initialized, fetchBookmarks]);
+  }, [user?.id, initialized, fetchBookmarksWithDetails]);
 
   const getTypeColor = (type: string) => {
     switch (type) {
@@ -152,7 +155,7 @@ const Bookmarks = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-600 mb-4">Error: {error}</p>
-          <Button onClick={fetchBookmarks}>Try Again</Button>
+          <Button onClick={fetchBookmarksWithDetails}>Try Again</Button>
         </div>
       </div>
     );

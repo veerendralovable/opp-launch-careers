@@ -12,15 +12,19 @@ export const useBookmarks = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const subscriptionRef = useRef<any>(null);
+  const fetchingRef = useRef(false);
 
   const fetchBookmarks = useCallback(async () => {
-    if (!user) {
-      setBookmarks([]);
-      setInitialized(true);
+    if (!user || fetchingRef.current) {
+      if (!user) {
+        setBookmarks([]);
+        setInitialized(true);
+      }
       return;
     }
     
     try {
+      fetchingRef.current = true;
       setLoading(true);
       setError(null);
       
@@ -46,8 +50,9 @@ export const useBookmarks = () => {
     } finally {
       setLoading(false);
       setInitialized(true);
+      fetchingRef.current = false;
     }
-  }, [user]);
+  }, [user?.id]);
 
   const toggleBookmark = async (opportunityId: string) => {
     if (!user) {
@@ -59,7 +64,6 @@ export const useBookmarks = () => {
       return;
     }
 
-    setLoading(true);
     try {
       const isBookmarked = bookmarks.includes(opportunityId);
       
@@ -97,47 +101,21 @@ export const useBookmarks = () => {
         description: error.message,
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
     }
   };
 
-  // Initial fetch when user changes
+  // Initial fetch - only when user changes and not already initialized for that user
   useEffect(() => {
-    setInitialized(false);
-    fetchBookmarks();
-  }, [user?.id]);
-
-  // Set up real-time subscription
-  useEffect(() => {
-    if (!user || !initialized) return;
-
-    if (!subscriptionRef.current) {
-      console.log('Setting up bookmarks real-time subscription for user:', user.id);
-      
-      const channel = supabase
-        .channel('bookmarks-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'bookmarks',
-            filter: `user_id=eq.${user.id}`,
-          },
-          (payload) => {
-            console.log('Bookmarks changed:', payload);
-            // Only refetch after a delay to prevent loops
-            setTimeout(() => {
-              fetchBookmarks();
-            }, 1000);
-          }
-        )
-        .subscribe();
-
-      subscriptionRef.current = channel;
+    if (user && !initialized) {
+      fetchBookmarks();
+    } else if (!user) {
+      setBookmarks([]);
+      setInitialized(true);
     }
+  }, [user?.id, initialized, fetchBookmarks]);
 
+  // Clean up subscription when component unmounts or user changes
+  useEffect(() => {
     return () => {
       if (subscriptionRef.current) {
         console.log('Cleaning up bookmarks subscription');
@@ -145,6 +123,37 @@ export const useBookmarks = () => {
         subscriptionRef.current = null;
       }
     };
+  }, []);
+
+  // Set up real-time subscription only after initial fetch
+  useEffect(() => {
+    if (!user || !initialized || subscriptionRef.current) return;
+
+    console.log('Setting up bookmarks real-time subscription for user:', user.id);
+    
+    const channel = supabase
+      .channel(`bookmarks-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'bookmarks',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          console.log('Bookmarks changed:', payload);
+          // Debounced refetch to prevent loops
+          setTimeout(() => {
+            if (!fetchingRef.current) {
+              fetchBookmarks();
+            }
+          }, 1000);
+        }
+      )
+      .subscribe();
+
+    subscriptionRef.current = channel;
   }, [user?.id, initialized, fetchBookmarks]);
 
   return { 

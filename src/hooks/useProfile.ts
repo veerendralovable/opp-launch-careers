@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -14,16 +14,20 @@ export const useProfile = () => {
   const [initialized, setInitialized] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
+  const fetchingRef = useRef(false);
 
   const fetchProfile = useCallback(async () => {
-    if (!user) {
-      setProfile(null);
-      setLoading(false);
-      setInitialized(true);
+    if (!user || fetchingRef.current) {
+      if (!user) {
+        setProfile(null);
+        setLoading(false);
+        setInitialized(true);
+      }
       return;
     }
 
     try {
+      fetchingRef.current = true;
       setLoading(true);
       setError(null);
       
@@ -77,11 +81,12 @@ export const useProfile = () => {
     } finally {
       setLoading(false);
       setInitialized(true);
+      fetchingRef.current = false;
     }
   }, [user?.id]);
 
   const updateProfile = async (updates: Partial<Profile>) => {
-    if (!user || !profile) return;
+    if (!user || !profile || fetchingRef.current) return false;
 
     try {
       setLoading(true);
@@ -131,19 +136,16 @@ export const useProfile = () => {
     }
   };
 
-  // Initial fetch when user changes
+  // Initial fetch when user is available and not already initialized
   useEffect(() => {
-    if (!initialized) {
+    if (user && !initialized) {
       fetchProfile();
+    } else if (!user) {
+      setProfile(null);
+      setError(null);
+      setInitialized(true);
     }
-  }, [initialized, fetchProfile]);
-
-  // Reset when user changes
-  useEffect(() => {
-    setInitialized(false);
-    setProfile(null);
-    setError(null);
-  }, [user?.id]);
+  }, [user?.id, initialized, fetchProfile]);
 
   return {
     profile,

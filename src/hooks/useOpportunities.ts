@@ -15,21 +15,19 @@ export const useOpportunities = (filters?: {
   const [error, setError] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
   
-  // Use ref to prevent infinite loops
-  const filtersRef = useRef(filters);
   const subscriptionRef = useRef<any>(null);
-
-  // Update filters ref when filters change
-  useEffect(() => {
-    filtersRef.current = filters;
-  }, [filters?.type, filters?.domain, filters?.search]);
+  const fetchingRef = useRef(false);
+  const lastFiltersRef = useRef<string>('');
 
   const fetchOpportunities = useCallback(async () => {
+    if (fetchingRef.current) return;
+    
     try {
+      fetchingRef.current = true;
       setLoading(true);
       setError(null);
       
-      console.log('Fetching opportunities with filters:', filtersRef.current);
+      console.log('Fetching opportunities with filters:', filters);
       
       let query = supabase
         .from('opportunities')
@@ -38,17 +36,16 @@ export const useOpportunities = (filters?: {
         .gte('deadline', new Date().toISOString().split('T')[0])
         .order('created_at', { ascending: false });
 
-      const currentFilters = filtersRef.current;
-      if (currentFilters?.type && currentFilters.type !== 'All') {
-        query = query.eq('type', currentFilters.type);
+      if (filters?.type && filters.type !== 'All') {
+        query = query.eq('type', filters.type);
       }
 
-      if (currentFilters?.domain && currentFilters.domain !== 'All') {
-        query = query.eq('domain', currentFilters.domain);
+      if (filters?.domain && filters.domain !== 'All') {
+        query = query.eq('domain', filters.domain);
       }
 
-      if (currentFilters?.search) {
-        query = query.or(`title.ilike.%${currentFilters.search}%,description.ilike.%${currentFilters.search}%,company.ilike.%${currentFilters.search}%`);
+      if (filters?.search) {
+        query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%,company.ilike.%${filters.search}%`);
       }
 
       const { data, error: fetchError } = await query;
@@ -67,57 +64,37 @@ export const useOpportunities = (filters?: {
     } finally {
       setLoading(false);
       setInitialized(true);
+      fetchingRef.current = false;
     }
-  }, []);
+  }, [filters?.type, filters?.domain, filters?.search]);
 
-  // Initial fetch - only run once
+  // Initial fetch - only run once when component mounts
   useEffect(() => {
     if (!initialized) {
       fetchOpportunities();
     }
   }, [initialized, fetchOpportunities]);
 
-  // Handle filter changes - but prevent infinite loops
+  // Handle filter changes - only refetch if filters actually changed
   useEffect(() => {
-    if (initialized) {
-      // Debounce the filter changes
+    if (!initialized) return;
+
+    const currentFilters = JSON.stringify(filters);
+    if (currentFilters !== lastFiltersRef.current) {
+      lastFiltersRef.current = currentFilters;
+      
       const timeoutId = setTimeout(() => {
-        fetchOpportunities();
+        if (!fetchingRef.current) {
+          fetchOpportunities();
+        }
       }, 300);
 
       return () => clearTimeout(timeoutId);
     }
   }, [filters?.type, filters?.domain, filters?.search, initialized, fetchOpportunities]);
 
-  // Set up real-time subscription - only once
+  // Clean up subscription when component unmounts
   useEffect(() => {
-    if (!subscriptionRef.current) {
-      console.log('Setting up real-time subscription for opportunities');
-      
-      const channel = supabase
-        .channel('opportunities-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'opportunities',
-          },
-          (payload) => {
-            console.log('Opportunities table changed:', payload);
-            // Only refetch if we're already initialized to prevent loops
-            if (initialized) {
-              setTimeout(() => {
-                fetchOpportunities();
-              }, 1000);
-            }
-          }
-        )
-        .subscribe();
-
-      subscriptionRef.current = channel;
-    }
-
     return () => {
       if (subscriptionRef.current) {
         console.log('Cleaning up opportunities subscription');
@@ -125,6 +102,36 @@ export const useOpportunities = (filters?: {
         subscriptionRef.current = null;
       }
     };
+  }, []);
+
+  // Set up real-time subscription only after initial fetch
+  useEffect(() => {
+    if (!initialized || subscriptionRef.current) return;
+
+    console.log('Setting up real-time subscription for opportunities');
+    
+    const channel = supabase
+      .channel('opportunities-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'opportunities',
+        },
+        (payload) => {
+          console.log('Opportunities table changed:', payload);
+          // Debounced refetch to prevent loops
+          setTimeout(() => {
+            if (!fetchingRef.current) {
+              fetchOpportunities();
+            }
+          }, 1000);
+        }
+      )
+      .subscribe();
+
+    subscriptionRef.current = channel;
   }, [initialized, fetchOpportunities]);
 
   return { 
