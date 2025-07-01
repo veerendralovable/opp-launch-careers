@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { validateAccessCode } from '@/config/security';
-import { Loader2, Shield, User, Crown } from 'lucide-react';
+import { Loader2, Shield, User, Crown, CheckCircle } from 'lucide-react';
 import BackButton from '@/components/BackButton';
 
 const Auth = () => {
@@ -66,7 +66,7 @@ const Auth = () => {
     try {
       if (isSignUp) {
         if (requiresAccessCode(selectedRole) && !validateAccessCode(accessCode, selectedRole as 'admin' | 'moderator')) {
-          throw new Error('Invalid access code. Access denied.');
+          throw new Error('Invalid access code. Please check your access code and try again.');
         }
 
         console.log('Starting secure signup process for role:', selectedRole);
@@ -74,15 +74,17 @@ const Auth = () => {
         const { error: signUpError } = await signUp(email, password, name, selectedRole);
         if (signUpError) throw signUpError;
 
+        // Show success message with role-specific information
         const roleMessages = {
-          user: "Please check your email to verify your account.",
-          admin: "Admin account created successfully. Please check your email to verify your account. Admin privileges will be activated after verification.",
-          moderator: "Moderator account created successfully. Please check your email to verify your account. Moderator privileges will be activated after verification."
+          user: "User account created successfully! Please check your email to verify your account.",
+          admin: "Admin account created successfully! Your admin privileges will be activated after email verification. Please check your email.",
+          moderator: "Moderator account created successfully! Your moderator privileges will be activated after email verification. Please check your email."
         };
         
         toast({
-          title: "Account created!",
+          title: "Account Created Successfully!",
           description: roleMessages[selectedRole as keyof typeof roleMessages],
+          action: <CheckCircle className="h-4 w-4 text-green-600" />
         });
       } else {
         console.log('Starting secure signin process');
@@ -91,13 +93,13 @@ const Auth = () => {
         
         toast({
           title: "Welcome back!",
-          description: "You have successfully signed in.",
+          description: "You have successfully signed in. Redirecting...",
         });
       }
     } catch (error: any) {
       console.error('Auth error:', error);
       toast({
-        title: "Error",
+        title: "Authentication Error",
         description: error.message,
         variant: "destructive",
       });
@@ -233,10 +235,10 @@ const Auth = () => {
                         value={accessCode}
                         onChange={(e) => setAccessCode(e.target.value)}
                         required
-                        placeholder={`Enter ${selectedRole} access code`}
+                        placeholder={`Enter ${selectedRole} access code: 'rani'`}
                       />
                       <p className="text-xs text-gray-500 mt-1">
-                        Special code required for {selectedRole} account creation
+                        Special code required for {selectedRole} account creation (Use: 'rani')
                       </p>
                     </div>
                   )}

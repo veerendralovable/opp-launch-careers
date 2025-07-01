@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -56,6 +57,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const assignUserRole = async (userId: string, role: 'user' | 'admin' | 'moderator') => {
+    try {
+      console.log('Assigning role:', role, 'to user:', userId);
+      
+      // Use the secure function to assign the role
+      const { error } = await supabase.rpc('assign_user_role_secure', {
+        _user_id: userId,
+        _role: role
+      });
+
+      if (error) {
+        console.error('Error assigning role:', error);
+        throw error;
+      }
+
+      console.log('Role assigned successfully:', role);
+      return true;
+    } catch (error) {
+      console.error('Failed to assign role:', error);
+      return false;
+    }
+  };
+
   useEffect(() => {
     // Get initial session
     const getSession = async () => {
@@ -100,6 +124,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const signUp = async (email: string, password: string, name: string, role: string = 'user') => {
     try {
       setLoading(true);
+      console.log('Starting signup process for role:', role);
 
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -115,26 +140,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (error) throw error;
 
-      // If user is created, assign the role
-      if (data.user && !data.user.email_confirmed_at) {
-        // For unconfirmed users, we'll assign the role after email confirmation
-        console.log('User created, email confirmation required');
-      } else if (data.user) {
-        // For auto-confirmed users, assign role immediately
-        // Cast the role to the expected type for the database function
-        const roleValue = role as 'user' | 'admin' | 'moderator';
-        const { error: roleError } = await supabase.rpc('assign_user_role_secure', {
-          _user_id: data.user.id,
-          _role: roleValue
-        });
+      // If user is created successfully
+      if (data.user) {
+        console.log('User created:', data.user.id, 'with requested role:', role);
+        
+        // Wait a moment for the trigger to complete, then override with the correct role
+        setTimeout(async () => {
+          const roleAssigned = await assignUserRole(data.user!.id, role as 'user' | 'admin' | 'moderator');
+          if (roleAssigned) {
+            console.log('Role assignment completed successfully');
+            // Refresh the user role
+            await fetchUserRole(data.user!.id);
+          }
+        }, 2000);
 
-        if (roleError) {
-          console.error('Error assigning role:', roleError);
-        }
+        toast({
+          title: "Account created!",
+          description: `${role.charAt(0).toUpperCase() + role.slice(1)} account created successfully. Please check your email to verify your account.`,
+        });
       }
 
       return { error: null };
     } catch (error: any) {
+      console.error('Signup error:', error);
       return { error };
     } finally {
       setLoading(false);
