@@ -316,35 +316,71 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          bio: string | null
           branch: string | null
           college: string | null
           created_at: string
           email: string | null
+          experience_level: string | null
+          github_url: string | null
           id: string
+          last_active_at: string | null
+          linkedin_url: string | null
           location: string | null
           name: string | null
+          notification_preferences: Json | null
+          phone: string | null
+          portfolio_url: string | null
+          preferred_job_types: string[] | null
+          preferred_locations: string[] | null
+          profile_completion_score: number | null
+          skills: string[] | null
           updated_at: string
         }
         Insert: {
           avatar_url?: string | null
+          bio?: string | null
           branch?: string | null
           college?: string | null
           created_at?: string
           email?: string | null
+          experience_level?: string | null
+          github_url?: string | null
           id: string
+          last_active_at?: string | null
+          linkedin_url?: string | null
           location?: string | null
           name?: string | null
+          notification_preferences?: Json | null
+          phone?: string | null
+          portfolio_url?: string | null
+          preferred_job_types?: string[] | null
+          preferred_locations?: string[] | null
+          profile_completion_score?: number | null
+          skills?: string[] | null
           updated_at?: string
         }
         Update: {
           avatar_url?: string | null
+          bio?: string | null
           branch?: string | null
           college?: string | null
           created_at?: string
           email?: string | null
+          experience_level?: string | null
+          github_url?: string | null
           id?: string
+          last_active_at?: string | null
+          linkedin_url?: string | null
           location?: string | null
           name?: string | null
+          notification_preferences?: Json | null
+          phone?: string | null
+          portfolio_url?: string | null
+          preferred_job_types?: string[] | null
+          preferred_locations?: string[] | null
+          profile_completion_score?: number | null
+          skills?: string[] | null
           updated_at?: string
         }
         Relationships: []
@@ -466,6 +502,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
         }
         Returns: boolean
+      }
+      calculate_profile_completion: {
+        Args: { profile_row: Database["public"]["Tables"]["profiles"]["Row"] }
+        Returns: number
       }
       has_role: {
         Args: {
