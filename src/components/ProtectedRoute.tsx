@@ -14,7 +14,7 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
   children, 
-  requireAuth = false, 
+  requireAuth = true, 
   requireAdmin = false,
   requireModerator = false
 }) => {

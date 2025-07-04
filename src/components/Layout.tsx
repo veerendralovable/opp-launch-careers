@@ -1,11 +1,15 @@
 
 import React from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import Navigation from './Navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 
-const Layout = () => {
+interface LayoutProps {
+  children: React.ReactNode;
+}
+
+const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
   const { loading } = useAuth();
 
@@ -28,7 +32,7 @@ const Layout = () => {
     <div className="min-h-screen bg-background">
       {!hideNavigation && <Navigation />}
       <main>
-        <Outlet />
+        {children}
       </main>
     </div>
   );
