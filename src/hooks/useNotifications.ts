@@ -49,6 +49,29 @@ export const useNotifications = () => {
     }
   };
 
+  const deleteNotification = async (notificationId: string) => {
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('id', notificationId);
+
+      if (error) throw error;
+      fetchNotifications();
+      toast({
+        title: "Notification Deleted",
+        description: "Notification has been deleted successfully.",
+      });
+    } catch (error: any) {
+      console.error('Error deleting notification:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete notification.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const createNotification = async (userId: string, title: string, message: string, type: string = 'info', actionUrl?: string) => {
     try {
       const { error } = await supabase
@@ -111,6 +134,7 @@ export const useNotifications = () => {
     unreadCount,
     loading,
     markAsRead,
+    deleteNotification,
     createNotification,
     refetch: fetchNotifications
   };
