@@ -13,18 +13,18 @@ import {
   Crown, 
   User,
   Loader2,
-  AlertTriangle
+  AlertTriangle,
+  Megaphone
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Database } from '@/integrations/supabase/types';
 
-type UserRole = 'user' | 'admin' | 'moderator';
+type UserRole = Database['public']['Enums']['app_role'];
+type UserRoleRow = Database['public']['Tables']['user_roles']['Row'];
+type Profile = Database['public']['Tables']['profiles']['Row'];
 
-interface UserWithRole {
-  id: string;
-  name: string | null;
-  email: string | null;
-  created_at: string;
-  user_roles: { role: UserRole }[];
+interface UserWithRole extends Profile {
+  user_roles: UserRoleRow[];
 }
 
 const UserManagement = () => {
@@ -108,6 +108,8 @@ const UserManagement = () => {
         return <Shield className="h-4 w-4 text-red-600" />;
       case 'moderator':
         return <Crown className="h-4 w-4 text-blue-600" />;
+      case 'advertiser':
+        return <Megaphone className="h-4 w-4 text-green-600" />;
       default:
         return <User className="h-4 w-4 text-gray-600" />;
     }
@@ -119,6 +121,8 @@ const UserManagement = () => {
         return <Badge className="bg-red-100 text-red-800">Admin</Badge>;
       case 'moderator':
         return <Badge className="bg-blue-100 text-blue-800">Moderator</Badge>;
+      case 'advertiser':
+        return <Badge className="bg-green-100 text-green-800">Advertiser</Badge>;
       default:
         return <Badge variant="secondary">User</Badge>;
     }
@@ -229,6 +233,15 @@ const UserManagement = () => {
                               onClick={() => updateUserRole(user.id, 'moderator')}
                             >
                               Make Moderator
+                            </Button>
+                          )}
+                          {userRole !== 'advertiser' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => updateUserRole(user.id, 'advertiser')}
+                            >
+                              Make Advertiser
                             </Button>
                           )}
                           {userRole !== 'admin' && (
