@@ -34,7 +34,7 @@ export const usePerformanceTracking = (pageName: string) => {
       console.log(`Performance metrics for ${pageName}:`, metrics);
 
       // In production, send to analytics
-      if (process.env.NODE_ENV === 'production' && window.gtag) {
+      if (import.meta.env.MODE === 'production' && window.gtag) {
         window.gtag('event', 'page_performance', {
           page_name: pageName,
           page_load_time: Math.round(metrics.pageLoadTime),

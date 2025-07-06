@@ -60,8 +60,8 @@ const queryClient = new QueryClient({
 });
 
 const AppContent = () => {
-  // Initialize Google Analytics
-  useGoogleAnalytics(process.env.VITE_GA_MEASUREMENT_ID);
+  // Initialize Google Analytics - using import.meta.env instead of process.env
+  useGoogleAnalytics(import.meta.env.VITE_GA_MEASUREMENT_ID);
 
   return (
     <Router>

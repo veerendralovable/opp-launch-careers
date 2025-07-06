@@ -13,7 +13,7 @@ export const useGoogleAnalytics = (measurementId?: string) => {
   const location = useLocation();
 
   useEffect(() => {
-    if (!measurementId || process.env.NODE_ENV !== 'production') {
+    if (!measurementId || import.meta.env.MODE !== 'production') {
       return;
     }
 
