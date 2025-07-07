@@ -51,12 +51,12 @@ export const useProductionMetrics = () => {
 
       if (profilesError) throw profilesError;
 
-      // Fetch bookmarks (as proxy for applications)
-      const { data: bookmarks, error: bookmarksError } = await supabase
-        .from('bookmarks')
+      // Fetch applications (real data instead of bookmarks)
+      const { data: applications, error: applicationsError } = await supabase
+        .from('applications')
         .select('*');
 
-      if (bookmarksError) throw bookmarksError;
+      if (applicationsError) throw applicationsError;
 
       const now = new Date();
       const activeOpportunities = opportunities?.filter(opp => 
@@ -80,7 +80,7 @@ export const useProductionMetrics = () => {
         totalOpportunities: opportunities?.length || 0,
         activeOpportunities: activeOpportunities.length,
         totalUsers: profiles?.length || 0,
-        totalApplications: bookmarks?.length || 0,
+        totalApplications: applications?.length || 0,
         recentActivity,
         pendingCount: pendingOpportunities.length,
         approvedCount: approvedOpportunities.length
@@ -120,6 +120,18 @@ export const useProductionMetrics = () => {
         },
         () => {
           console.log('Profiles update received');
+          setTimeout(() => fetchMetrics(), 1000);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'applications',
+        },
+        () => {
+          console.log('Applications update received');
           setTimeout(() => fetchMetrics(), 1000);
         }
       )

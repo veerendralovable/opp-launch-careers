@@ -1,10 +1,11 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/integrations/supabase/client';
 import BackButton from '@/components/BackButton';
+import { useUserDashboard } from '@/hooks/useUserDashboard';
+import { useNotifications } from '@/hooks/useNotifications';
 import { 
   BookmarkIcon, 
   Eye, 
@@ -15,77 +16,14 @@ import {
   Award,
   User,
   Bell,
-  FileText
+  FileText,
+  Loader2
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const UserDashboard = () => {
-  const [stats, setStats] = useState({
-    bookmarks: 0,
-    applications: 0,
-    views: 0,
-    profileCompletion: 0
-  });
-
-  const [recentActivity, setRecentActivity] = useState([]);
-
-  useEffect(() => {
-    fetchUserStats();
-    fetchRecentActivity();
-  }, []);
-
-  const fetchUserStats = async () => {
-    try {
-      const user = (await supabase.auth.getUser()).data.user;
-      if (!user) return;
-
-      // Fetch bookmarks count
-      const { data: bookmarks } = await supabase
-        .from('bookmarks')
-        .select('id')
-        .eq('user_id', user.id);
-
-      // Fetch profile completion
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('profile_completion_score')
-        .eq('id', user.id)
-        .single();
-
-      setStats({
-        bookmarks: bookmarks?.length || 0,
-        applications: 12, // Mock data
-        views: 245, // Mock data
-        profileCompletion: profile?.profile_completion_score || 0
-      });
-    } catch (error) {
-      console.error('Error fetching user stats:', error);
-    }
-  };
-
-  const fetchRecentActivity = async () => {
-    // Mock recent activity data
-    setRecentActivity([
-      {
-        type: 'application',
-        title: 'Applied to Software Engineering Internship at Google',
-        date: '2 hours ago',
-        status: 'pending'
-      },
-      {
-        type: 'bookmark',
-        title: 'Bookmarked Machine Learning Scholarship',
-        date: '1 day ago',
-        status: 'saved'
-      },
-      {
-        type: 'view',
-        title: 'Viewed 5 new opportunities in Technology',
-        date: '2 days ago',
-        status: 'viewed'
-      }
-    ]);
-  };
+  const { stats, recentActivity, loading: dashboardLoading, error } = useUserDashboard();
+  const { notifications, unreadCount, loading: notificationsLoading } = useNotifications();
 
   const statCards = [
     {
@@ -103,11 +41,11 @@ const UserDashboard = () => {
       link: "/applications"
     },
     {
-      title: "Profile Views",
+      title: "Opportunities Viewed",
       value: stats.views,
       icon: Eye,
       color: "bg-purple-100 text-purple-600",
-      link: "/profile"
+      link: "/opportunities"
     },
     {
       title: "Profile Completion",
@@ -148,6 +86,30 @@ const UserDashboard = () => {
       color: "bg-purple-100 text-purple-600"
     }
   ];
+
+  if (dashboardLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
+          <p className="text-gray-600">Loading your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">Error: {error}</p>
+          <Button onClick={() => window.location.reload()}>
+            Try Again
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -219,62 +181,86 @@ const UserDashboard = () => {
             </div>
           </div>
 
-          {/* Recent Activity */}
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Recent Activity</h2>
+          {/* Recent Activity and Notifications */}
+          <div className="space-y-6">
+            {/* Recent Activity */}
             <Card>
-              <CardContent className="pt-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Recent Activity
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
                 <div className="space-y-4">
-                  {recentActivity.map((activity, index) => (
-                    <div key={index} className="flex items-start gap-3 pb-4 border-b last:border-b-0">
-                      <div className="p-2 bg-blue-100 rounded-lg">
-                        {activity.type === 'application' && <Send className="h-4 w-4 text-blue-600" />}
-                        {activity.type === 'bookmark' && <BookmarkIcon className="h-4 w-4 text-blue-600" />}
-                        {activity.type === 'view' && <Eye className="h-4 w-4 text-blue-600" />}
+                  {recentActivity.length > 0 ? (
+                    recentActivity.slice(0, 5).map((activity) => (
+                      <div key={activity.id} className="flex items-start gap-3 pb-4 border-b last:border-b-0">
+                        <div className="p-2 bg-blue-100 rounded-lg">
+                          {activity.type === 'application' && <Send className="h-4 w-4 text-blue-600" />}
+                          {activity.type === 'bookmark' && <BookmarkIcon className="h-4 w-4 text-blue-600" />}
+                          {activity.type === 'view' && <Eye className="h-4 w-4 text-blue-600" />}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-900">{activity.title}</p>
+                          <p className="text-xs text-gray-500">{activity.date}</p>
+                          <Badge variant="secondary" className="mt-1 text-xs">
+                            {activity.status}
+                          </Badge>
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">{activity.title}</p>
-                        <p className="text-xs text-gray-500">{activity.date}</p>
-                        <Badge variant="secondary" className="mt-1 text-xs">
-                          {activity.status}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <p className="text-gray-500 text-center py-4">No recent activity</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
 
-            {/* Notifications */}
-            <Card className="mt-6">
+            {/* Real-time Notifications */}
+            <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Bell className="h-5 w-5" />
                   Notifications
+                  {unreadCount > 0 && (
+                    <Badge className="bg-red-100 text-red-800 ml-2">
+                      {unreadCount}
+                    </Badge>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    <div>
-                      <p className="text-sm font-medium">New opportunities match your profile</p>
-                      <p className="text-xs text-gray-500">5 new matches found</p>
-                    </div>
+                {notificationsLoading ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="h-4 w-4 animate-spin" />
                   </div>
-                  <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <div>
-                      <p className="text-sm font-medium">Application status updated</p>
-                      <p className="text-xs text-gray-500">Google internship - Under review</p>
-                    </div>
+                ) : (
+                  <div className="space-y-3">
+                    {notifications.length > 0 ? (
+                      notifications.slice(0, 5).map((notification) => (
+                        <div key={notification.id} className={`flex items-center gap-3 p-3 rounded-lg ${
+                          notification.is_read ? 'bg-gray-50' : 'bg-blue-50'
+                        }`}>
+                          <div className={`w-2 h-2 rounded-full ${
+                            notification.is_read ? 'bg-gray-400' : 'bg-blue-500'
+                          }`}></div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">{notification.title}</p>
+                            <p className="text-xs text-gray-500">{notification.message}</p>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-gray-500 text-center py-4">No notifications</p>
+                    )}
+                    <Link to="/notifications">
+                      <Button variant="outline" className="w-full mt-4">
+                        View All Notifications
+                      </Button>
+                    </Link>
                   </div>
-                </div>
-                <Link to="/notifications">
-                  <Button variant="outline" className="w-full mt-4">
-                    View All Notifications
-                  </Button>
-                </Link>
+                )}
               </CardContent>
             </Card>
           </div>
