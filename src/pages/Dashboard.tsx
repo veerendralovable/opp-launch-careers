@@ -1,4 +1,4 @@
-
+import React from 'react';
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,12 +9,13 @@ import {
   TrendingUp, 
   Calendar,
   ExternalLink,
-  Loader2,
   User
 } from "lucide-react";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { DashboardSkeleton } from '@/components/LoadingSkeleton';
+import AnimatedButton from '@/components/ui/animated-button';
 
 const Dashboard = () => {
   const [bookmarks, setBookmarks] = useState<any[]>([]);
@@ -37,9 +38,6 @@ const Dashboard = () => {
       setLoading(true);
       setError(null);
 
-      console.log('Fetching dashboard data for user:', user.id);
-
-      // Fetch bookmarks with opportunities data
       const { data: bookmarksData, error: bookmarksError } = await supabase
         .from('bookmarks')
         .select(`
@@ -59,11 +57,8 @@ const Dashboard = () => {
 
       if (bookmarksError) {
         console.error('Error fetching bookmarks:', bookmarksError);
-      } else {
-        console.log('Bookmarks fetched:', bookmarksData?.length || 0);
       }
 
-      // Fetch resumes
       const { data: resumesData, error: resumesError } = await supabase
         .from('resumes')
         .select('*')
@@ -73,13 +68,10 @@ const Dashboard = () => {
 
       if (resumesError) {
         console.error('Error fetching resumes:', resumesError);
-      } else {
-        console.log('Resumes fetched:', resumesData?.length || 0);
       }
 
       setBookmarks(bookmarksData || []);
       setResumes(resumesData || []);
-      console.log('Dashboard data fetched successfully');
     } catch (error: any) {
       console.error('Error fetching dashboard data:', error);
       setError(error.message || 'Failed to load dashboard data');
@@ -90,7 +82,6 @@ const Dashboard = () => {
     }
   }, [user?.id]);
 
-  // Initial data fetch - only when user is available and not already initialized
   useEffect(() => {
     if (user && !initialized && !authLoading) {
       fetchDashboardData();
@@ -100,7 +91,6 @@ const Dashboard = () => {
     }
   }, [user, initialized, authLoading, fetchDashboardData]);
 
-  // Reset state when user changes
   useEffect(() => {
     if (!authLoading) {
       setInitialized(false);
@@ -112,27 +102,20 @@ const Dashboard = () => {
   }, [user?.id, authLoading]);
 
   if (authLoading || (loading && !initialized)) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading your dashboard...</p>
-        </div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center animate-fade-in">
           <p className="text-red-600 mb-4">Error: {error}</p>
-          <Button onClick={() => {
+          <AnimatedButton onClick={() => {
             setError(null);
             setInitialized(false);
           }}>
             Try Again
-          </Button>
+          </AnimatedButton>
         </div>
       </div>
     );
@@ -140,14 +123,14 @@ const Dashboard = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card className="max-w-md w-full">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <Card className="max-w-md w-full animate-fade-in">
           <CardContent className="pt-6 text-center">
             <User className="h-12 w-12 text-gray-300 mx-auto mb-4" />
             <h2 className="text-xl font-semibold mb-2">Please Sign In</h2>
             <p className="text-gray-600 mb-4">You need to be signed in to view your dashboard.</p>
             <Link to="/auth">
-              <Button className="w-full">Sign In</Button>
+              <AnimatedButton className="w-full">Sign In</AnimatedButton>
             </Link>
           </CardContent>
         </Card>
@@ -158,16 +141,16 @@ const Dashboard = () => {
   const bestMatchScore = resumes.length > 0 ? Math.max(...resumes.map(r => r.match_score || 0)) : 0;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 mt-2">Your personalized career hub</p>
+    <div className="min-h-screen bg-gray-50 pb-20 md:pb-0 animate-fade-in">
+      <div className="container-responsive py-6 md:py-8">
+        <div className="mb-6 md:mb-8">
+          <h1 className="heading-responsive font-bold text-gray-900">Dashboard</h1>
+          <p className="text-responsive text-gray-600 mt-2">Your personalized career hub</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {/* Stats Cards */}
-          <Card>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
+          <Card className="card-hover">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Bookmarked</CardTitle>
               <BookmarkIcon className="h-4 w-4 text-muted-foreground" />
@@ -178,7 +161,7 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="card-hover">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Resumes</CardTitle>
               <FileText className="h-4 w-4 text-muted-foreground" />
@@ -189,7 +172,7 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="card-hover sm:col-span-2 lg:col-span-1">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Best Match</CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
@@ -201,14 +184,15 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
           {/* Bookmarked Opportunities */}
-          <Card>
+          <Card className="animate-fade-in">
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Bookmarked Opportunities</CardTitle>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <CardTitle className="text-base md:text-lg">Bookmarked Opportunities</CardTitle>
                 <Link to="/bookmarks">
-                  <Button variant="outline" size="sm">View All</Button>
+                  <AnimatedButton variant="outline" size="sm">View All</AnimatedButton>
                 </Link>
               </div>
               <CardDescription>Your saved opportunities</CardDescription>
@@ -219,11 +203,11 @@ const Dashboard = () => {
                 if (!opportunity) return null;
                 
                 return (
-                  <div key={bookmark.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <h4 className="font-medium">{opportunity.title}</h4>
-                      <p className="text-sm text-gray-600">{opportunity.company}</p>
-                      <div className="flex items-center gap-2 mt-1">
+                  <div key={bookmark.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium truncate">{opportunity.title}</h4>
+                      <p className="text-sm text-gray-600 truncate">{opportunity.company}</p>
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
                         <Badge variant="outline">{opportunity.type}</Badge>
                         <span className="text-xs text-gray-500 flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
@@ -232,7 +216,7 @@ const Dashboard = () => {
                       </div>
                     </div>
                     <Link to={`/opportunities/${opportunity.id}`}>
-                      <Button size="sm" variant="ghost">
+                      <Button size="sm" variant="ghost" className="hover:scale-110 transition-transform">
                         <ExternalLink className="h-4 w-4" />
                       </Button>
                     </Link>
@@ -240,27 +224,30 @@ const Dashboard = () => {
                 );
               })}
               {bookmarks.length === 0 && (
-                <p className="text-gray-500 text-center py-4">No bookmarked opportunities yet</p>
+                <div className="text-center py-6 md:py-8">
+                  <BookmarkIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                  <p className="text-gray-500">No bookmarked opportunities yet</p>
+                </div>
               )}
             </CardContent>
           </Card>
 
           {/* Resume History */}
-          <Card>
+          <Card className="animate-fade-in">
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Resume History</CardTitle>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <CardTitle className="text-base md:text-lg">Resume History</CardTitle>
                 <Link to="/tailor">
-                  <Button variant="outline" size="sm">Tailor New</Button>
+                  <AnimatedButton variant="outline" size="sm">Tailor New</AnimatedButton>
                 </Link>
               </div>
               <CardDescription>Your AI-tailored resumes</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {resumes.map(resume => (
-                <div key={resume.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div>
-                    <h4 className="font-medium">{resume.name}</h4>
+                <div key={resume.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium truncate">{resume.name}</h4>
                     <p className="text-sm text-gray-600">Created on {new Date(resume.created_at).toLocaleDateString()}</p>
                     <div className="flex items-center gap-2 mt-1">
                       {resume.match_score && (
@@ -270,13 +257,16 @@ const Dashboard = () => {
                       )}
                     </div>
                   </div>
-                  <Button size="sm" variant="ghost">
+                  <Button size="sm" variant="ghost" className="hover:scale-110 transition-transform">
                     <FileText className="h-4 w-4" />
                   </Button>
                 </div>
               ))}
               {resumes.length === 0 && (
-                <p className="text-gray-500 text-center py-4">No tailored resumes yet</p>
+                <div className="text-center py-6 md:py-8">
+                  <FileText className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                  <p className="text-gray-500">No tailored resumes yet</p>
+                </div>
               )}
             </CardContent>
           </Card>
