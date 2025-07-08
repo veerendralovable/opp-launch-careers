@@ -37,8 +37,11 @@ export const useRealtime = (options: UseRealtimeOptions) => {
 
     fetchInitialData();
 
+    // Create a unique channel name to avoid conflicts
+    const channelName = `realtime-${table}-${Math.random().toString(36).substr(2, 9)}`;
+    
     const channel = supabase
-      .channel(`realtime-${table}`)
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
