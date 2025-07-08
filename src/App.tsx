@@ -1,306 +1,93 @@
-
+import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { HelmetProvider } from 'react-helmet-async';
-import { Suspense } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
-import Layout from "@/components/Layout";
-import ProtectedRoute from "@/components/ProtectedRoute";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { useGoogleAnalytics } from "@/hooks/useGoogleAnalytics";
-
-// Pages
-import Index from "./pages/Index";
-import Auth from "./pages/Auth";
+import ChatWidget from "@/components/chat/ChatWidget";
+import ProductionDataLoader from "@/components/ProductionDataLoader";
+import Home from "./pages/Home";
 import Opportunities from "./pages/Opportunities";
 import Scholarships from "./pages/Scholarships";
-import Submit from "./pages/Submit";
+import Authentication from "./pages/Authentication";
+import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import Bookmarks from "./pages/Bookmarks";
-import OpportunityDetail from "./pages/OpportunityDetail";
-import Blog from "./pages/Blog";
-import ResumeBuilder from "./pages/ResumeBuilder";
-import UserDashboard from "./pages/UserDashboard";
-import Notifications from "./pages/Notifications";
 import Applications from "./pages/Applications";
-import AdvertiserDashboard from "./pages/AdvertiserDashboard";
-import AdvertiserCreateAd from "./pages/AdvertiserCreateAd";
-import AdvertiserAds from "./pages/AdvertiserAds";
-
-// Moderator Pages
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminAnalytics from "./pages/AdminAnalytics";
 import ModeratorDashboard from "./pages/ModeratorDashboard";
-import ModeratorPending from "./pages/ModeratorPending";
-import ModeratorApproved from "./pages/ModeratorApproved";
-import ModeratorUsers from "./pages/ModeratorUsers";
+import PendingOpportunities from "./pages/PendingOpportunities";
+import ApprovedOpportunities from "./pages/ApprovedOpportunities";
+import UsersPage from "./pages/UsersPage";
 
-// Lazy loaded components for better performance
-import { 
-  LazyAdminDashboard,
-  LazyAdminAnalytics,
-  LazyAdminSettings
-} from "./components/LazyComponents";
+// Lazy loading components
+const OpportunitiesPage = lazy(() => import("@/pages/Opportunities"));
+const ScholarshipPage = lazy(() => import("@/pages/Scholarships"));
+const AuthenticationPage = lazy(() => import("@/pages/Authentication"));
+const DashboardPage = lazy(() => import("@/pages/Dashboard"));
+const ProfilePage = lazy(() => import("@/pages/Profile"));
+const BookmarksPage = lazy(() => import("@/pages/Bookmarks"));
+const ApplicationsPage = lazy(() => import("@/pages/Applications"));
+const AdminDashboardPage = lazy(() => import("@/pages/AdminDashboard"));
+const AdminAnalyticsPage = lazy(() => import("@/pages/AdminAnalytics"));
+const ModeratorDashboardPage = lazy(() => import("@/pages/ModeratorDashboard"));
+const PendingOpportunitiesPage = lazy(() => import("@/pages/PendingOpportunities"));
+const ApprovedOpportunitiesPage = lazy(() => import("@/pages/ApprovedOpportunities"));
+const Users = lazy(() => import("@/pages/UsersPage"));
 
-// Admin Pages
-import UserManagement from "./pages/UserManagement";
-import AdminExpired from "./pages/AdminExpired";
-import AdminNotifications from "./pages/AdminNotifications";
+// New enhanced components
+const EnhancedResumeBuilder = lazy(() => import("@/components/enhanced/ResumeBuilder"));
+const AdvancedSearch = lazy(() => import("@/components/enhanced/AdvancedSearch"));
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-    },
-  },
-});
+const queryClient = new QueryClient();
 
-// Component that handles Google Analytics and routing - must be inside Router context
-const RoutesWithAnalytics = () => {
-  // Initialize Google Analytics - now inside Router context
-  useGoogleAnalytics(import.meta.env.VITE_GA_MEASUREMENT_ID);
-
+const App = () => {
   return (
-    <Layout>
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<Index />} />
-        <Route path="/auth" element={<Auth />} />
-        <Route path="/blog" element={<Blog />} />
-        <Route path="/resume-builder" element={<ResumeBuilder />} />
-        
-        {/* Protected Routes */}
-        <Route 
-          path="/opportunities" 
-          element={
-            <ProtectedRoute requireAuth={false}>
-              <Opportunities />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/scholarships" 
-          element={
-            <ProtectedRoute requireAuth={false}>
-              <Scholarships />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/opportunities/:id" 
-          element={
-            <ProtectedRoute requireAuth={false}>
-              <OpportunityDetail />
-            </ProtectedRoute>
-          } 
-        />
-        
-        {/* User Routes */}
-        <Route 
-          path="/dashboard" 
-          element={
-            <ProtectedRoute>
-              <UserDashboard />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/submit" 
-          element={
-            <ProtectedRoute>
-              <Submit />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/profile" 
-          element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/bookmarks" 
-          element={
-            <ProtectedRoute>
-              <Bookmarks />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/notifications" 
-          element={
-            <ProtectedRoute>
-              <Notifications />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/applications" 
-          element={
-            <ProtectedRoute>
-              <Applications />
-            </ProtectedRoute>
-          } 
-        />
-
-        {/* Advertiser Routes */}
-        <Route 
-          path="/advertiser/dashboard" 
-          element={
-            <ProtectedRoute requireAdvertiser>
-              <AdvertiserDashboard />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/advertiser/create-ad" 
-          element={
-            <ProtectedRoute requireAdvertiser>
-              <AdvertiserCreateAd />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/advertiser/ads" 
-          element={
-            <ProtectedRoute requireAdvertiser>
-              <AdvertiserAds />
-            </ProtectedRoute>
-          } 
-        />
-
-        {/* Moderator Routes */}
-        <Route 
-          path="/moderator/dashboard" 
-          element={
-            <ProtectedRoute requireModerator>
-              <ModeratorDashboard />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/moderator/pending" 
-          element={
-            <ProtectedRoute requireModerator>
-              <ModeratorPending />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/moderator/approved" 
-          element={
-            <ProtectedRoute requireModerator>
-              <ModeratorApproved />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/moderator/users" 
-          element={
-            <ProtectedRoute requireModerator>
-              <ModeratorUsers />
-            </ProtectedRoute>
-          } 
-        />
-
-        {/* Admin Routes - Lazy Loaded */}
-        <Route 
-          path="/admin" 
-          element={
-            <ProtectedRoute requireAdmin>
-              <Suspense fallback={<LoadingSpinner text="Loading Admin Dashboard..." />}>
-                <LazyAdminDashboard />
-              </Suspense>
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/admin/dashboard" 
-          element={
-            <ProtectedRoute requireAdmin>
-              <Suspense fallback={<LoadingSpinner text="Loading Admin Dashboard..." />}>
-                <LazyAdminDashboard />
-              </Suspense>
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/admin/users" 
-          element={
-            <ProtectedRoute requireAdmin>
-              <UserManagement />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/admin/expired" 
-          element={
-            <ProtectedRoute requireAdmin>
-              <AdminExpired />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/admin/notifications" 
-          element={
-            <ProtectedRoute requireAdmin>
-              <AdminNotifications />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/admin/analytics" 
-          element={
-            <ProtectedRoute requireAdmin>
-              <Suspense fallback={<LoadingSpinner text="Loading Analytics..." />}>
-                <LazyAdminAnalytics />
-              </Suspense>
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/admin/settings" 
-          element={
-            <ProtectedRoute requireAdmin>
-              <Suspense fallback={<LoadingSpinner text="Loading Settings..." />}>
-                <LazyAdminSettings />
-              </Suspense>
-            </ProtectedRoute>
-          } 
-        />
-      </Routes>
-    </Layout>
-  );
-};
-
-const AppContent = () => {
-  return (
-    <Router>
-      <RoutesWithAnalytics />
-    </Router>
-  );
-};
-
-const App = () => (
-  <ErrorBoundary>
-    <HelmetProvider>
+    <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <AuthProvider>
             <Toaster />
             <Sonner />
-            <AppContent />
+            <BrowserRouter>
+              <Suspense fallback={<LoadingSpinner />}>
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/opportunities" element={<Opportunities />} />
+                  <Route path="/scholarships" element={<Scholarships />} />
+                  <Route path="/auth" element={<Authentication />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/bookmarks" element={<Bookmarks />} />
+                  <Route path="/applications" element={<Applications />} />
+                  <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                  <Route path="/admin/analytics" element={<AdminAnalytics />} />
+                  <Route path="/moderator/dashboard" element={<ModeratorDashboard />} />
+                  <Route path="/moderator/pending" element={<PendingOpportunities />} />
+                  <Route path="/moderator/approved" element={<ApprovedOpportunities />} />
+                  <Route path="/moderator/users" element={<UsersPage />} />
+                  
+                  {/* Enhanced Routes */}
+                  <Route path="/resume-builder-pro" element={<EnhancedResumeBuilder />} />
+                  <Route path="/advanced-search" element={<AdvancedSearch />} />
+                  
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+                
+                {/* Global Components */}
+                <ChatWidget roomId="global" title="Community Chat" />
+                <ProductionDataLoader />
+              </Suspense>
+            </BrowserRouter>
           </AuthProvider>
         </TooltipProvider>
       </QueryClientProvider>
-    </HelmetProvider>
-  </ErrorBoundary>
-);
+    </ErrorBoundary>
+  );
+};
 
 export default App;
