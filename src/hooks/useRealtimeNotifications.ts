@@ -18,6 +18,7 @@ interface RealtimeNotification {
 export const useRealtimeNotifications = () => {
   const [notifications, setNotifications] = useState<RealtimeNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -39,6 +40,8 @@ export const useRealtimeNotifications = () => {
         }
       } catch (error) {
         console.error('Error fetching notifications:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -116,6 +119,7 @@ export const useRealtimeNotifications = () => {
   return {
     notifications,
     unreadCount,
+    loading,
     markAsRead,
     markAllAsRead
   };

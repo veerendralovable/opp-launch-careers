@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -24,6 +25,7 @@ import {
 import { useDebounce } from '@/hooks/useDebounce';
 
 interface SearchFilters {
+  [key: string]: string[] | boolean | string;
   type: string[];
   domain: string[];
   location: string[];
@@ -238,13 +240,15 @@ const AdvancedSearch: React.FC = () => {
     if (!user || !saveSearchName.trim()) return;
     
     try {
+      const searchCriteria = {
+        query,
+        filters: JSON.parse(JSON.stringify(filters)) // Ensure it's properly serializable
+      };
+
       await supabase.from('saved_searches').insert({
         user_id: user.id,
         name: saveSearchName.trim(),
-        search_criteria: {
-          query,
-          filters
-        },
+        search_criteria: searchCriteria,
         notification_enabled: true
       });
       
