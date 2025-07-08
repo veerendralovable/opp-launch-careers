@@ -38,7 +38,7 @@ export const useRealtime = (options: UseRealtimeOptions) => {
     fetchInitialData();
 
     // Create a unique channel name to avoid conflicts
-    const channelName = `realtime-${table}-${Math.random().toString(36).substr(2, 9)}`;
+    const channelName = `realtime-${table}-${user.id}-${Math.random().toString(36).substr(2, 9)}`;
     
     const channel = supabase
       .channel(channelName)
@@ -54,13 +54,13 @@ export const useRealtime = (options: UseRealtimeOptions) => {
           console.log(`Realtime update for ${table}:`, payload);
           
           if (payload.eventType === 'INSERT') {
-            setData(prev => [payload.new as any, ...prev]);
+            setData(prev => [payload.new, ...prev]);
           } else if (payload.eventType === 'UPDATE') {
             setData(prev => prev.map(item => 
-              item.id === (payload.new as any).id ? payload.new as any : item
+              item.id === payload.new.id ? payload.new : item
             ));
           } else if (payload.eventType === 'DELETE') {
-            setData(prev => prev.filter(item => item.id !== (payload.old as any).id));
+            setData(prev => prev.filter(item => item.id !== payload.old.id));
           }
         }
       )
