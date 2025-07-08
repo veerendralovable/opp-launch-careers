@@ -36,11 +36,14 @@ export const useRealtime = (options: UseRealtimeOptions) => {
         
         if (error) {
           console.error(`Error fetching ${table}:`, error);
+          setData([]);
         } else {
-          setData((initialData as RealtimeData[]) || []);
+          // Use unknown first to avoid type conversion issues
+          setData((initialData as unknown as RealtimeData[]) || []);
         }
       } catch (error) {
         console.error(`Error fetching ${table}:`, error);
+        setData([]);
       } finally {
         setLoading(false);
       }
