@@ -9,10 +9,12 @@ interface UseRealtimeOptions {
   filter?: string;
 }
 
-export const useRealtime = <T>({ table, event = '*', filter }: UseRealtimeOptions) => {
-  const [data, setData] = useState<T[]>([]);
+export const useRealtime = (options: UseRealtimeOptions) => {
+  const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+
+  const { table, event = '*', filter } = options;
 
   useEffect(() => {
     if (!user) return;
@@ -25,7 +27,7 @@ export const useRealtime = <T>({ table, event = '*', filter }: UseRealtimeOption
           query = query.eq(field, value);
         }
         const { data: initialData } = await query;
-        setData((initialData || []) as T[]);
+        setData(initialData || []);
       } catch (error) {
         console.error(`Error fetching ${table}:`, error);
       } finally {
@@ -49,13 +51,13 @@ export const useRealtime = <T>({ table, event = '*', filter }: UseRealtimeOption
           console.log(`Realtime update for ${table}:`, payload);
           
           if (payload.eventType === 'INSERT') {
-            setData(prev => [payload.new as T, ...prev]);
+            setData(prev => [payload.new, ...prev]);
           } else if (payload.eventType === 'UPDATE') {
             setData(prev => prev.map(item => 
-              (item as any).id === (payload.new as any).id ? payload.new as T : item
+              item.id === payload.new.id ? payload.new : item
             ));
           } else if (payload.eventType === 'DELETE') {
-            setData(prev => prev.filter(item => (item as any).id !== (payload.old as any).id));
+            setData(prev => prev.filter(item => item.id !== payload.old.id));
           }
         }
       )

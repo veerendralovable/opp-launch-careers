@@ -49,4 +49,6 @@ const LoadingSkeleton = () => {
   );
 };
 
+export const DashboardSkeleton = LoadingSkeleton;
+
 export default LoadingSkeleton;

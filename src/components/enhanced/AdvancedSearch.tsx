@@ -99,7 +99,6 @@ const AdvancedSearch: React.FC = () => {
         .order('created_at', { ascending: false });
       
       if (data) {
-        // Type cast the data to match our interface
         const typedSavedSearches: SavedSearch[] = data.map(item => ({
           id: item.id,
           name: item.name,

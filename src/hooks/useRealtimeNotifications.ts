@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 
 interface RealtimeNotification {
   id: string;
+  user_id?: string;
   title: string;
   message: string;
   type: string;

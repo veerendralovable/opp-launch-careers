@@ -9,6 +9,7 @@ import RecentActivity from '@/components/dashboard/RecentActivity';
 import LiveNotifications from '@/components/dashboard/LiveNotifications';
 import { useUserDashboard } from '@/hooks/useUserDashboard';
 import { useUserPresence } from '@/hooks/useUserPresence';
+import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
 import LoadingSkeleton from '@/components/LoadingSkeleton';
 
 const Dashboard = () => {
@@ -21,6 +22,7 @@ const Dashboard = () => {
   } = useUserDashboard();
   
   const { updatePresence } = useUserPresence();
+  const { notifications, unreadCount, loading: notificationsLoading } = useRealtimeNotifications();
 
   useEffect(() => {
     if (user) {
@@ -74,7 +76,11 @@ const Dashboard = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
           <div className="space-y-6 md:space-y-8">
             {/* Live Notifications */}
-            <LiveNotifications />
+            <LiveNotifications 
+              notifications={notifications}
+              unreadCount={unreadCount}
+              loading={notificationsLoading}
+            />
             
             {/* Stats Grid */}
             <DashboardStats stats={stats} />
