@@ -13,6 +13,7 @@ export const useBookmarks = () => {
   const { toast } = useToast();
   const subscriptionRef = useRef<any>(null);
   const fetchingRef = useRef(false);
+  const mountedRef = useRef(true);
 
   const fetchBookmarks = useCallback(async () => {
     if (!user || fetchingRef.current) {
@@ -43,13 +44,18 @@ export const useBookmarks = () => {
       
       const bookmarkIds = data?.map(b => b.opportunity_id) || [];
       console.log('Bookmarks fetched:', bookmarkIds.length);
-      setBookmarks(bookmarkIds);
+      
+      if (mountedRef.current) {
+        setBookmarks(bookmarkIds);
+      }
     } catch (error: any) {
       console.error('Error fetching bookmarks:', error);
       setError(error.message);
     } finally {
-      setLoading(false);
-      setInitialized(true);
+      if (mountedRef.current) {
+        setLoading(false);
+        setInitialized(true);
+      }
       fetchingRef.current = false;
     }
   }, [user?.id]);
@@ -75,7 +81,11 @@ export const useBookmarks = () => {
           .eq('opportunity_id', opportunityId);
         
         if (error) throw error;
-        setBookmarks(prev => prev.filter(id => id !== opportunityId));
+        
+        if (mountedRef.current) {
+          setBookmarks(prev => prev.filter(id => id !== opportunityId));
+        }
+        
         toast({
           title: "Bookmark removed",
           description: "Opportunity removed from your bookmarks.",
@@ -89,7 +99,11 @@ export const useBookmarks = () => {
           });
         
         if (error) throw error;
-        setBookmarks(prev => [...prev, opportunityId]);
+        
+        if (mountedRef.current) {
+          setBookmarks(prev => [...prev, opportunityId]);
+        }
+        
         toast({
           title: "Bookmark added",
           description: "Opportunity saved to your bookmarks.",
@@ -114,25 +128,21 @@ export const useBookmarks = () => {
     }
   }, [user?.id, initialized, fetchBookmarks]);
 
-  // Clean up subscription when component unmounts or user changes
-  useEffect(() => {
-    return () => {
-      if (subscriptionRef.current) {
-        console.log('Cleaning up bookmarks subscription');
-        supabase.removeChannel(subscriptionRef.current);
-        subscriptionRef.current = null;
-      }
-    };
-  }, []);
-
   // Set up real-time subscription only after initial fetch
   useEffect(() => {
-    if (!user || !initialized || subscriptionRef.current) return;
+    if (!user || !initialized) return;
+
+    // Clean up existing subscription
+    if (subscriptionRef.current) {
+      supabase.removeChannel(subscriptionRef.current);
+      subscriptionRef.current = null;
+    }
 
     console.log('Setting up bookmarks real-time subscription for user:', user.id);
     
+    const channelName = `bookmarks-${user.id}-${Date.now()}`;
     const channel = supabase
-      .channel(`bookmarks-${user.id}`)
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -145,7 +155,7 @@ export const useBookmarks = () => {
           console.log('Bookmarks changed:', payload);
           // Debounced refetch to prevent loops
           setTimeout(() => {
-            if (!fetchingRef.current) {
+            if (!fetchingRef.current && mountedRef.current) {
               fetchBookmarks();
             }
           }, 1000);
@@ -154,7 +164,27 @@ export const useBookmarks = () => {
       .subscribe();
 
     subscriptionRef.current = channel;
+
+    return () => {
+      if (subscriptionRef.current) {
+        console.log('Cleaning up bookmarks subscription');
+        supabase.removeChannel(subscriptionRef.current);
+        subscriptionRef.current = null;
+      }
+    };
   }, [user?.id, initialized, fetchBookmarks]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+      if (subscriptionRef.current) {
+        console.log('Cleaning up bookmarks subscription on unmount');
+        supabase.removeChannel(subscriptionRef.current);
+        subscriptionRef.current = null;
+      }
+    };
+  }, []);
 
   return { 
     bookmarks, 

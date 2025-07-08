@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -20,6 +20,8 @@ export const useRealtimeNotifications = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const channelRef = useRef<any>(null);
+  const mountedRef = useRef(true);
 
   useEffect(() => {
     if (!user) return;
@@ -34,22 +36,32 @@ export const useRealtimeNotifications = () => {
           .order('created_at', { ascending: false })
           .limit(50);
 
-        if (data) {
+        if (data && mountedRef.current) {
           setNotifications(data);
           setUnreadCount(data.filter(n => !n.is_read).length);
         }
       } catch (error) {
         console.error('Error fetching notifications:', error);
       } finally {
-        setLoading(false);
+        if (mountedRef.current) {
+          setLoading(false);
+        }
       }
     };
 
     fetchNotifications();
 
-    // Set up real-time subscription
+    // Clean up any existing subscription
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+
+    // Set up real-time subscription with unique channel name
+    const channelName = `notifications-realtime-${user.id}-${Date.now()}`;
+    
     const channel = supabase
-      .channel('notifications-realtime')
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -63,7 +75,7 @@ export const useRealtimeNotifications = () => {
           // Check if notification is for this user or global
           const isForUser = !newNotification.user_id || newNotification.user_id === user.id;
           
-          if (isForUser) {
+          if (isForUser && mountedRef.current) {
             setNotifications(prev => [newNotification, ...prev.slice(0, 49)]);
             setUnreadCount(prev => prev + 1);
             
@@ -80,10 +92,24 @@ export const useRealtimeNotifications = () => {
       )
       .subscribe();
 
+    channelRef.current = channel;
+
     return () => {
-      supabase.removeChannel(channel);
+      mountedRef.current = false;
+      if (channelRef.current) {
+        console.log('Cleaning up useRealtimeNotifications subscription');
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
     };
-  }, [user]);
+  }, [user?.id]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const markAsRead = async (notificationId: string) => {
     try {
@@ -92,10 +118,12 @@ export const useRealtimeNotifications = () => {
         .update({ is_read: true })
         .eq('id', notificationId);
 
-      setNotifications(prev =>
-        prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n)
-      );
-      setUnreadCount(prev => Math.max(0, prev - 1));
+      if (mountedRef.current) {
+        setNotifications(prev =>
+          prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n)
+        );
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      }
     } catch (error) {
       console.error('Error marking notification as read:', error);
     }
@@ -109,8 +137,10 @@ export const useRealtimeNotifications = () => {
         .or(`user_id.eq.${user?.id},user_id.is.null`)
         .eq('is_read', false);
 
-      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
-      setUnreadCount(0);
+      if (mountedRef.current) {
+        setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+        setUnreadCount(0);
+      }
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
     }

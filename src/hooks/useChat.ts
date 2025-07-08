@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -19,6 +19,8 @@ export const useChat = (roomId?: string, receiverId?: string) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const channelRef = useRef<any>(null);
+  const mountedRef = useRef(true);
 
   const sendMessage = async (content: string) => {
     if (!user || !content.trim()) return;
@@ -41,6 +43,7 @@ export const useChat = (roomId?: string, receiverId?: string) => {
       if (error) throw error;
     } catch (error) {
       console.error('Error sending message:', error);
+      throw error;
     }
   };
 
@@ -88,19 +91,31 @@ export const useChat = (roomId?: string, receiverId?: string) => {
           updated_at: notification.created_at
         }));
         
-        setMessages(transformedMessages);
+        if (mountedRef.current) {
+          setMessages(transformedMessages);
+        }
       } catch (error) {
         console.error('Error fetching messages:', error);
       } finally {
-        setLoading(false);
+        if (mountedRef.current) {
+          setLoading(false);
+        }
       }
     };
 
     fetchMessages();
 
-    // Set up real-time subscription for notifications
+    // Clean up any existing subscription
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+
+    // Set up real-time subscription for notifications with unique channel name
+    const channelName = `chat-messages-${user.id}-${roomId || receiverId || 'global'}-${Date.now()}`;
+    
     const channel = supabase
-      .channel('notifications-realtime')
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -128,17 +143,31 @@ export const useChat = (roomId?: string, receiverId?: string) => {
             ? newNotification.action_url?.includes(roomId)
             : newNotification.user_id === user.id || newNotification.user_id === receiverId;
 
-          if (belongsToConversation) {
+          if (belongsToConversation && mountedRef.current) {
             setMessages(prev => [...prev, newMessage]);
           }
         }
       )
       .subscribe();
 
+    channelRef.current = channel;
+
     return () => {
-      supabase.removeChannel(channel);
+      mountedRef.current = false;
+      if (channelRef.current) {
+        console.log('Cleaning up useChat subscription');
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
     };
-  }, [user, roomId, receiverId]);
+  }, [user?.id, roomId, receiverId]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   return { messages, sendMessage, markAsRead, loading };
 };

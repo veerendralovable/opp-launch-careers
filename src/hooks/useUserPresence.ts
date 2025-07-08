@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -14,6 +14,9 @@ interface UserPresence {
 export const useUserPresence = () => {
   const [onlineUsers, setOnlineUsers] = useState<UserPresence[]>([]);
   const { user } = useAuth();
+  const channelRef = useRef<any>(null);
+  const intervalRef = useRef<any>(null);
+  const mountedRef = useRef(true);
 
   const updatePresence = async (status: 'online' | 'offline' | 'away' = 'online', currentPage?: string) => {
     if (!user) return;
@@ -55,9 +58,17 @@ export const useUserPresence = () => {
       updatePresence('offline');
     };
 
-    // Set up real-time presence subscription using analytics table
+    // Clean up any existing subscription
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+
+    // Set up real-time presence subscription using analytics table with unique channel name
+    const channelName = `user-presence-${user.id}-${Date.now()}`;
+    
     const channel = supabase
-      .channel('user-presence')
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -84,29 +95,50 @@ export const useUserPresence = () => {
               metadata: item.metadata
             }));
           
-          setOnlineUsers(presenceData);
+          if (mountedRef.current) {
+            setOnlineUsers(presenceData);
+          }
         }
       )
       .subscribe();
+
+    channelRef.current = channel;
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('beforeunload', handleBeforeUnload);
 
     // Periodic presence update (every 30 seconds)
-    const presenceInterval = setInterval(() => {
+    intervalRef.current = setInterval(() => {
       if (document.visibilityState === 'visible') {
         updatePresence('online');
       }
     }, 30000);
 
     return () => {
+      mountedRef.current = false;
       updatePresence('offline');
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('beforeunload', handleBeforeUnload);
-      clearInterval(presenceInterval);
-      supabase.removeChannel(channel);
+      
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      
+      if (channelRef.current) {
+        console.log('Cleaning up useUserPresence subscription');
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
     };
-  }, [user]);
+  }, [user?.id]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   return { onlineUsers, updatePresence };
 };
