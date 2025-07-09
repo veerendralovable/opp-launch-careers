@@ -104,7 +104,6 @@ export const useNotifications = () => {
     }
   }, [user]);
 
-  // Set up real-time subscription
   useEffect(() => {
     if (!user) return;
 

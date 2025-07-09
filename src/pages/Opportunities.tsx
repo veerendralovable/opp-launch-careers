@@ -59,7 +59,6 @@ const Opportunities = () => {
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">All Opportunities</h1>
             <p className="text-gray-600 mb-6">Discover internships, contests, events, and scholarships</p>
 
-            {/* Search and Filters */}
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="relative flex-1">
@@ -90,7 +89,6 @@ const Opportunities = () => {
                 </div>
               </div>
 
-              {/* Expandable Filters */}
               <div className={`transition-all duration-300 ${
                 showFilters 
                   ? 'max-h-40 opacity-100 animate-scale-in' 

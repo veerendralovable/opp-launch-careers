@@ -26,7 +26,6 @@ export const useRealtime = (options: UseRealtimeOptions) => {
 
     const fetchInitialData = async () => {
       try {
-        // Simplify the query to avoid deep type instantiation
         const query = supabase.from(table as any).select('*');
         if (filter) {
           const [field, value] = filter.split('=');
@@ -38,7 +37,6 @@ export const useRealtime = (options: UseRealtimeOptions) => {
           console.error(`Error fetching ${table}:`, error);
           setData([]);
         } else {
-          // Use unknown first to avoid type conversion issues
           setData((initialData as unknown as RealtimeData[]) || []);
         }
       } catch (error) {
@@ -51,7 +49,6 @@ export const useRealtime = (options: UseRealtimeOptions) => {
 
     fetchInitialData();
 
-    // Create a unique channel name to avoid conflicts
     const channelName = `realtime-${table}-${user.id}-${Date.now()}`;
     
     const channel = supabase

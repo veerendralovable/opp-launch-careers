@@ -95,7 +95,6 @@ const NotificationSystem = () => {
     if (user) {
       fetchNotifications();
 
-      // Set up real-time subscription
       const channel = supabase
         .channel(`notifications-${user.id}-${Date.now()}`)
         .on(
@@ -110,7 +109,6 @@ const NotificationSystem = () => {
             console.log('Notification update:', payload);
             fetchNotifications();
             
-            // Show toast for new notifications
             if (payload.eventType === 'INSERT') {
               toast({
                 title: payload.new.title,

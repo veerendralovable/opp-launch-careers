@@ -12,7 +12,6 @@ import ChatWidget from "@/components/chat/ChatWidget";
 import ProductionDataLoader from "@/components/ProductionDataLoader";
 import ResponsiveNavigation from "@/components/ResponsiveNavigation";
 
-// Lazy loading components
 const Index = lazy(() => import("@/pages/Index"));
 const OpportunitiesPage = lazy(() => import("@/pages/Opportunities"));
 const ScholarshipPage = lazy(() => import("@/pages/Scholarships"));
@@ -30,7 +29,6 @@ const ApprovedOpportunitiesPage = lazy(() => import("@/pages/ModeratorApproved")
 const UsersPage = lazy(() => import("@/pages/ModeratorUsers"));
 const AdminPage = lazy(() => import("@/pages/Admin"));
 
-// New enhanced components
 const EnhancedResumeBuilder = lazy(() => import("@/components/enhanced/ResumeBuilder"));
 const AdvancedSearch = lazy(() => import("@/components/enhanced/AdvancedSearch"));
 
@@ -66,7 +64,6 @@ const App = () => {
                     <Route path="/moderator/approved" element={<ApprovedOpportunitiesPage />} />
                     <Route path="/moderator/users" element={<UsersPage />} />
                     
-                    {/* Enhanced Routes */}
                     <Route path="/resume-builder-pro" element={<EnhancedResumeBuilder />} />
                     <Route path="/advanced-search" element={<AdvancedSearch />} />
                     
@@ -74,7 +71,6 @@ const App = () => {
                   </Routes>
                 </Suspense>
                 
-                {/* Global Components */}
                 <ChatWidget roomId="global" title="Community Chat" />
                 <ProductionDataLoader />
               </div>

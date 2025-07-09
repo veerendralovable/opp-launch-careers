@@ -44,7 +44,6 @@ export const useOpportunities = (filters?: {
         .order('priority', { ascending: false })
         .order('created_at', { ascending: false });
 
-      // Apply filters
       if (filters?.type && filters.type !== 'All') {
         query = query.eq('type', filters.type);
       }
@@ -97,14 +96,12 @@ export const useOpportunities = (filters?: {
     }
   }, [filters?.type, filters?.domain, filters?.search, filters?.location, filters?.remoteOnly, filters?.experienceLevel, filters?.employmentType, filters?.featured]);
 
-  // Initial fetch
   useEffect(() => {
     if (!initialized) {
       fetchOpportunities();
     }
   }, [initialized, fetchOpportunities]);
 
-  // Handle filter changes
   useEffect(() => {
     if (!initialized) return;
 
@@ -122,7 +119,6 @@ export const useOpportunities = (filters?: {
     }
   }, [filters, initialized, fetchOpportunities]);
 
-  // Clean up subscription
   useEffect(() => {
     return () => {
       if (subscriptionRef.current) {
@@ -133,7 +129,6 @@ export const useOpportunities = (filters?: {
     };
   }, []);
 
-  // Real-time subscription with unique channel name
   useEffect(() => {
     if (!initialized || subscriptionRef.current) return;
 
@@ -151,7 +146,6 @@ export const useOpportunities = (filters?: {
         },
         (payload) => {
           console.log('Opportunities table changed:', payload);
-          // Force refresh to get updated data
           setTimeout(() => {
             if (!fetchingRef.current) {
               fetchOpportunities(true);

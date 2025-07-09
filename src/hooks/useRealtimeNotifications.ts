@@ -26,7 +26,6 @@ export const useRealtimeNotifications = () => {
   useEffect(() => {
     if (!user) return;
 
-    // Fetch initial notifications
     const fetchNotifications = async () => {
       try {
         const { data } = await supabase
@@ -51,13 +50,11 @@ export const useRealtimeNotifications = () => {
 
     fetchNotifications();
 
-    // Clean up any existing subscription
     if (channelRef.current) {
       supabase.removeChannel(channelRef.current);
       channelRef.current = null;
     }
 
-    // Set up real-time subscription with unique channel name
     const channelName = `notifications-realtime-${user.id}-${Date.now()}`;
     
     const channel = supabase
@@ -72,14 +69,12 @@ export const useRealtimeNotifications = () => {
         (payload) => {
           const newNotification = payload.new as RealtimeNotification;
           
-          // Check if notification is for this user or global
           const isForUser = !newNotification.user_id || newNotification.user_id === user.id;
           
           if (isForUser && mountedRef.current) {
             setNotifications(prev => [newNotification, ...prev.slice(0, 49)]);
             setUnreadCount(prev => prev + 1);
             
-            // Show toast notification
             toast(newNotification.title, {
               description: newNotification.message,
               action: newNotification.action_url ? {
@@ -104,7 +99,6 @@ export const useRealtimeNotifications = () => {
     };
   }, [user?.id]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       mountedRef.current = false;

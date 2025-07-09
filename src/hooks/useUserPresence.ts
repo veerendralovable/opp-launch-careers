@@ -22,7 +22,6 @@ export const useUserPresence = () => {
     if (!user) return;
 
     try {
-      // Use analytics table to track presence since user_presence table doesn't exist
       await supabase.from('analytics').insert({
         user_id: user.id,
         event_type: 'user_presence',
@@ -41,10 +40,8 @@ export const useUserPresence = () => {
   useEffect(() => {
     if (!user) return;
 
-    // Set initial presence
     updatePresence('online');
 
-    // Update presence on page visibility change
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         updatePresence('online');
@@ -53,18 +50,15 @@ export const useUserPresence = () => {
       }
     };
 
-    // Update presence before page unload
     const handleBeforeUnload = () => {
       updatePresence('offline');
     };
 
-    // Clean up any existing subscription
     if (channelRef.current) {
       supabase.removeChannel(channelRef.current);
       channelRef.current = null;
     }
 
-    // Set up real-time presence subscription using analytics table with unique channel name
     const channelName = `user-presence-${user.id}-${Date.now()}`;
     
     const channel = supabase
@@ -77,14 +71,12 @@ export const useUserPresence = () => {
           table: 'analytics',
         },
         async (payload) => {
-          // Fetch updated presence data from analytics
           const { data } = await supabase
             .from('analytics')
             .select('*')
             .eq('event_type', 'user_presence')
             .gte('created_at', new Date(Date.now() - 5 * 60 * 1000).toISOString());
           
-          // Transform analytics data to presence format
           const presenceData: UserPresence[] = (data || [])
             .filter(item => item.metadata && typeof item.metadata === 'object')
             .map(item => ({
@@ -107,7 +99,6 @@ export const useUserPresence = () => {
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('beforeunload', handleBeforeUnload);
 
-    // Periodic presence update (every 30 seconds)
     intervalRef.current = setInterval(() => {
       if (document.visibilityState === 'visible') {
         updatePresence('online');
@@ -133,7 +124,6 @@ export const useUserPresence = () => {
     };
   }, [user?.id]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       mountedRef.current = false;

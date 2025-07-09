@@ -35,13 +35,11 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 lg:hidden">
-      {/* Backdrop */}
       <div 
         className="fixed inset-0 bg-black/50 backdrop-blur-sm animate-fade-in"
         onClick={onClose}
       />
       
-      {/* Menu Panel */}
       <div className="fixed inset-y-0 right-0 w-full max-w-sm bg-white shadow-xl animate-slide-in-right">
         <div className="flex items-center justify-between p-4 border-b">
           <span className="text-lg font-semibold">Menu</span>
@@ -56,7 +54,6 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
         </div>
         
         <div className="p-4 space-y-4">
-          {/* Main Navigation */}
           <div className="space-y-2">
             <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Navigation</h3>
             {navigationItems.map((item, index) => {
@@ -82,7 +79,6 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
             })}
           </div>
 
-          {/* User Navigation */}
           {user && userNavigationItems.length > 0 && (
             <div className="space-y-2">
               <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Account</h3>
@@ -110,7 +106,6 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
             </div>
           )}
 
-          {/* Admin/Moderator Links */}
           {user && (userRole === 'admin' || userRole === 'moderator') && (
             <div className="space-y-2">
               <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Management</h3>
@@ -125,7 +120,6 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
             </div>
           )}
 
-          {/* User Actions */}
           {user && (
             <div className="pt-4 border-t space-y-2">
               <div className="flex items-center gap-3 px-4 py-2 text-sm text-gray-600">

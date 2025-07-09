@@ -118,7 +118,6 @@ export const useAdmin = () => {
     }
   }, [user, userRole]);
 
-  // Set up real-time subscription
   useEffect(() => {
     if (!user || (!isAdmin && !isModerator)) return;
 
