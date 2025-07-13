@@ -155,21 +155,18 @@ const AdminDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-      {/* Header */}
-      <div className="bg-white/80 backdrop-blur-sm border-b shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center gap-4 animate-slide-in-left">
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-white border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
               <BackButton to="/opportunities" />
               <div>
-                <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-red-600 to-purple-600 bg-clip-text text-transparent">
-                  Admin Dashboard
-                </h1>
+                <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
                 <p className="text-gray-600 mt-2">Platform administration and management</p>
               </div>
             </div>
-            <Badge className="bg-red-100 text-red-800 animate-bounce-in">
+            <Badge className="bg-red-100 text-red-800">
               <Shield className="h-3 w-3 mr-1" />
               Admin Access
             </Badge>
@@ -177,14 +174,14 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 md:gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-8">
           {statCards.map((stat, index) => (
-            <Card key={index} className="hover:shadow-lg transition-all duration-300 hover:scale-105 animate-fade-in hover-lift" style={{ animationDelay: `${index * 100}ms` }}>
+            <Card key={index} className="hover:shadow-lg transition-shadow">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
-                  <div className={`p-2 rounded-lg ${stat.color} transition-all duration-300`}>
+                  <div className={`p-2 rounded-lg ${stat.color}`}>
                     <stat.icon className="h-6 w-6" />
                   </div>
                   <div className="text-right">
@@ -200,10 +197,10 @@ const AdminDashboard = () => {
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {quickActions.map((action, index) => (
-            <Card key={index} className="hover:shadow-lg transition-all duration-300 hover:scale-105 animate-fade-in hover-lift" style={{ animationDelay: `${(index + 6) * 100}ms` }}>
+            <Card key={index} className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <CardTitle className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${action.color} transition-all duration-300`}>
+                  <div className={`p-2 rounded-lg ${action.color}`}>
                     <action.icon className="h-5 w-5" />
                   </div>
                   {action.title}
@@ -212,7 +209,7 @@ const AdminDashboard = () => {
               <CardContent>
                 <p className="text-gray-600 mb-4">{action.description}</p>
                 <Link to={action.link}>
-                  <Button className="w-full transition-all duration-300 hover:scale-105">
+                  <Button className="w-full">
                     Access {action.title}
                   </Button>
                 </Link>

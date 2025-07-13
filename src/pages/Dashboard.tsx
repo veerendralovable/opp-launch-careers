@@ -42,12 +42,12 @@ const Dashboard = () => {
     return (
       <Layout>
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="text-center animate-fade-in">
+          <div className="text-center">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Something went wrong</h2>
             <p className="text-gray-600 mb-4">Unable to load dashboard data</p>
             <button 
               onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-300 hover:scale-105"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               Try Again
             </button>
@@ -59,12 +59,11 @@ const Dashboard = () => {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-        {/* Header */}
-        <div className="bg-white/80 backdrop-blur-sm border-b shadow-sm">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
+      <div className="min-h-screen bg-gray-50">
+        <div className="bg-white border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="animate-fade-in">
-              <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
                 Welcome back, {user.email?.split('@')[0]}! 👋
               </h1>
               <p className="text-gray-600 mt-2">
@@ -74,29 +73,24 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Main Content */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
           <div className="space-y-6 md:space-y-8">
             {/* Live Notifications */}
-            <div className="animate-fade-in" style={{ animationDelay: '100ms' }}>
-              <LiveNotifications 
-                notifications={notifications}
-                unreadCount={unreadCount}
-                loading={notificationsLoading}
-              />
-            </div>
+            <LiveNotifications 
+              notifications={notifications}
+              unreadCount={unreadCount}
+              loading={notificationsLoading}
+            />
             
             {/* Stats Grid */}
-            <div className="animate-fade-in" style={{ animationDelay: '200ms' }}>
-              <DashboardStats stats={stats} />
-            </div>
+            <DashboardStats stats={stats} />
 
             {/* Main Content Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-              <div className="lg:col-span-2 animate-fade-in" style={{ animationDelay: '300ms' }}>
+              <div className="lg:col-span-2">
                 <QuickActions />
               </div>
-              <div className="lg:col-span-1 animate-fade-in" style={{ animationDelay: '400ms' }}>
+              <div className="lg:col-span-1">
                 <RecentActivity activities={recentActivity} />
               </div>
             </div>

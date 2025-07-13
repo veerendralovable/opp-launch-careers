@@ -22,10 +22,9 @@ export const useRealtimeNotifications = () => {
   const { user } = useAuth();
   const channelRef = useRef<any>(null);
   const mountedRef = useRef(true);
-  const isSubscribedRef = useRef(false);
 
   useEffect(() => {
-    if (!user || !mountedRef.current) return;
+    if (!user) return;
 
     const fetchNotifications = async () => {
       try {
@@ -51,57 +50,44 @@ export const useRealtimeNotifications = () => {
 
     fetchNotifications();
 
-    // Clean up existing subscription
     if (channelRef.current) {
-      console.log('Cleaning up existing notifications subscription');
       supabase.removeChannel(channelRef.current);
       channelRef.current = null;
-      isSubscribedRef.current = false;
     }
 
-    // Only create new subscription if not already subscribed
-    if (!isSubscribedRef.current && mountedRef.current) {
-      const channelName = `notifications-realtime-${user.id}-${Date.now()}`;
-      
-      const channel = supabase
-        .channel(channelName)
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'notifications',
-          },
-          (payload) => {
-            if (!mountedRef.current) return;
+    const channelName = `notifications-realtime-${user.id}-${Date.now()}`;
+    
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+        },
+        (payload) => {
+          const newNotification = payload.new as RealtimeNotification;
+          
+          const isForUser = !newNotification.user_id || newNotification.user_id === user.id;
+          
+          if (isForUser && mountedRef.current) {
+            setNotifications(prev => [newNotification, ...prev.slice(0, 49)]);
+            setUnreadCount(prev => prev + 1);
             
-            const newNotification = payload.new as RealtimeNotification;
-            
-            const isForUser = !newNotification.user_id || newNotification.user_id === user.id;
-            
-            if (isForUser) {
-              setNotifications(prev => [newNotification, ...prev.slice(0, 49)]);
-              setUnreadCount(prev => prev + 1);
-              
-              toast(newNotification.title, {
-                description: newNotification.message,
-                action: newNotification.action_url ? {
-                  label: 'View',
-                  onClick: () => window.open(newNotification.action_url, '_blank')
-                } : undefined,
-              });
-            }
+            toast(newNotification.title, {
+              description: newNotification.message,
+              action: newNotification.action_url ? {
+                label: 'View',
+                onClick: () => window.open(newNotification.action_url, '_blank')
+              } : undefined,
+            });
           }
-        )
-        .subscribe((status) => {
-          console.log('Notifications subscription status:', status);
-          if (status === 'SUBSCRIBED') {
-            isSubscribedRef.current = true;
-          }
-        });
+        }
+      )
+      .subscribe();
 
-      channelRef.current = channel;
-    }
+    channelRef.current = channel;
 
     return () => {
       mountedRef.current = false;
@@ -109,7 +95,6 @@ export const useRealtimeNotifications = () => {
         console.log('Cleaning up useRealtimeNotifications subscription');
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
-        isSubscribedRef.current = false;
       }
     };
   }, [user?.id]);
