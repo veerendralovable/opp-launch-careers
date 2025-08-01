@@ -26,8 +26,6 @@ export const useChat = (roomId?: string, receiverId?: string) => {
     if (!user || !content.trim()) return;
 
     try {
-      // Since the messages table doesn't exist in the current schema,
-      // we'll use a workaround with notifications for now
       const messageData = {
         user_id: user.id,
         title: roomId ? `Message in ${roomId}` : 'Direct Message',
@@ -63,7 +61,6 @@ export const useChat = (roomId?: string, receiverId?: string) => {
 
     const fetchMessages = async () => {
       try {
-        // Fetch notifications as messages for now
         let query = supabase
           .from('notifications')
           .select('*')
@@ -78,7 +75,6 @@ export const useChat = (roomId?: string, receiverId?: string) => {
 
         const { data } = await query;
         
-        // Transform notifications to message format
         const transformedMessages = (data || []).map(notification => ({
           id: notification.id,
           sender_id: notification.user_id || '',
@@ -105,64 +101,68 @@ export const useChat = (roomId?: string, receiverId?: string) => {
 
     fetchMessages();
 
-    // Clean up any existing subscription
+    // Clean up existing subscription
     if (channelRef.current) {
+      console.log('Cleaning up existing chat subscription');
       supabase.removeChannel(channelRef.current);
       channelRef.current = null;
     }
 
-    // Set up real-time subscription for notifications with unique channel name
     const channelName = `chat-messages-${user.id}-${roomId || receiverId || 'global'}-${Date.now()}`;
     
-    const channel = supabase
-      .channel(channelName)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications',
-          filter: `type=eq.message`
-        },
-        (payload) => {
-          const newNotification = payload.new as any;
-          const newMessage: Message = {
-            id: newNotification.id,
-            sender_id: newNotification.user_id || '',
-            receiver_id: receiverId,
-            content: newNotification.message,
-            message_type: (roomId ? 'room' : 'direct') as 'direct' | 'room',
-            room_id: roomId,
-            is_read: false,
-            created_at: newNotification.created_at,
-            updated_at: newNotification.created_at
-          };
+    try {
+      const channel = supabase
+        .channel(channelName)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'notifications',
+            filter: `type=eq.message`
+          },
+          (payload) => {
+            const newNotification = payload.new as any;
+            const newMessage: Message = {
+              id: newNotification.id,
+              sender_id: newNotification.user_id || '',
+              receiver_id: receiverId,
+              content: newNotification.message,
+              message_type: (roomId ? 'room' : 'direct') as 'direct' | 'room',
+              room_id: roomId,
+              is_read: false,
+              created_at: newNotification.created_at,
+              updated_at: newNotification.created_at
+            };
 
-          // Only add message if it belongs to current conversation
-          const belongsToConversation = roomId 
-            ? newNotification.action_url?.includes(roomId)
-            : newNotification.user_id === user.id || newNotification.user_id === receiverId;
+            const belongsToConversation = roomId 
+              ? newNotification.action_url?.includes(roomId)
+              : newNotification.user_id === user.id || newNotification.user_id === receiverId;
 
-          if (belongsToConversation && mountedRef.current) {
-            setMessages(prev => [...prev, newMessage]);
+            if (belongsToConversation && mountedRef.current) {
+              setMessages(prev => [...prev, newMessage]);
+            }
           }
-        }
-      )
-      .subscribe();
+        )
+        .subscribe((status) => {
+          console.log(`Chat subscription status: ${status}`);
+        });
 
-    channelRef.current = channel;
+      channelRef.current = channel;
+    } catch (error) {
+      console.error('Error setting up chat subscription:', error);
+    }
 
     return () => {
       mountedRef.current = false;
       if (channelRef.current) {
-        console.log('Cleaning up useChat subscription');
+        console.log('Cleaning up chat subscription on unmount');
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
     };
   }, [user?.id, roomId, receiverId]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       mountedRef.current = false;

@@ -20,7 +20,6 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ receiverId, roomId, title }) =>
   const [isMinimized, setIsMinimized] = useState(false);
   const [message, setMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const subscriptionRef = useRef<any>(null);
   
   const { user } = useAuth();
   const { messages, sendMessage, loading } = useChat(roomId, receiverId);
@@ -33,16 +32,6 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ receiverId, roomId, title }) =>
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
-
-  // Clean up subscription on unmount
-  useEffect(() => {
-    return () => {
-      if (subscriptionRef.current) {
-        console.log('Cleaning up ChatWidget subscription');
-        subscriptionRef.current = null;
-      }
-    };
-  }, []);
 
   const handleSendMessage = async () => {
     if (!message.trim()) return;

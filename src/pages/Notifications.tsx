@@ -1,15 +1,20 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import BackButton from '@/components/BackButton';
-import { useNotifications } from '@/hooks/useNotifications';
+import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
 import { Bell, Check, Trash2, Eye, AlertCircle } from 'lucide-react';
 
 const Notifications = () => {
-  const { notifications, markAsRead, deleteNotification, loading } = useNotifications();
+  const { notifications, markAsRead, markAllAsRead, loading } = useRealtimeNotifications();
   const [filter, setFilter] = useState<'all' | 'unread' | 'read'>('all');
+
+  const deleteNotification = async (id: string) => {
+    // This would be implemented if we had a delete function in the hook
+    console.log('Delete notification:', id);
+  };
 
   const filteredNotifications = notifications.filter(notification => {
     if (filter === 'unread') return !notification.is_read;
@@ -45,6 +50,14 @@ const Notifications = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 pb-20 md:pb-0 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
       <div className="bg-white border-b">
@@ -68,7 +81,6 @@ const Notifications = () => {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Filter Tabs */}
         <div className="flex gap-4 mb-6">
           <Button
             variant={filter === 'all' ? 'default' : 'outline'}
@@ -91,9 +103,19 @@ const Notifications = () => {
           >
             Read ({notifications.length - unreadCount})
           </Button>
+          {unreadCount > 0 && (
+            <Button
+              variant="outline"
+              onClick={markAllAsRead}
+              size="sm"
+              className="ml-auto"
+            >
+              <Check className="h-4 w-4 mr-2" />
+              Mark All Read
+            </Button>
+          )}
         </div>
 
-        {/* Notifications List */}
         <div className="space-y-4">
           {filteredNotifications.length === 0 ? (
             <Card>

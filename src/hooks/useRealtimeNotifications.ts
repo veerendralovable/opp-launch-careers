@@ -50,49 +50,56 @@ export const useRealtimeNotifications = () => {
 
     fetchNotifications();
 
+    // Clean up existing subscription
     if (channelRef.current) {
+      console.log('Cleaning up existing realtime notifications subscription');
       supabase.removeChannel(channelRef.current);
       channelRef.current = null;
     }
 
     const channelName = `notifications-realtime-${user.id}-${Date.now()}`;
     
-    const channel = supabase
-      .channel(channelName)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications',
-        },
-        (payload) => {
-          const newNotification = payload.new as RealtimeNotification;
-          
-          const isForUser = !newNotification.user_id || newNotification.user_id === user.id;
-          
-          if (isForUser && mountedRef.current) {
-            setNotifications(prev => [newNotification, ...prev.slice(0, 49)]);
-            setUnreadCount(prev => prev + 1);
+    try {
+      const channel = supabase
+        .channel(channelName)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${user.id}`
+          },
+          (payload) => {
+            const newNotification = payload.new as RealtimeNotification;
             
-            toast(newNotification.title, {
-              description: newNotification.message,
-              action: newNotification.action_url ? {
-                label: 'View',
-                onClick: () => window.open(newNotification.action_url, '_blank')
-              } : undefined,
-            });
+            if (mountedRef.current) {
+              setNotifications(prev => [newNotification, ...prev.slice(0, 49)]);
+              setUnreadCount(prev => prev + 1);
+              
+              toast(newNotification.title, {
+                description: newNotification.message,
+                action: newNotification.action_url ? {
+                  label: 'View',
+                  onClick: () => window.open(newNotification.action_url, '_blank')
+                } : undefined,
+              });
+            }
           }
-        }
-      )
-      .subscribe();
+        )
+        .subscribe((status) => {
+          console.log(`Realtime notifications subscription status: ${status}`);
+        });
 
-    channelRef.current = channel;
+      channelRef.current = channel;
+    } catch (error) {
+      console.error('Error setting up realtime notifications:', error);
+    }
 
     return () => {
       mountedRef.current = false;
       if (channelRef.current) {
-        console.log('Cleaning up useRealtimeNotifications subscription');
+        console.log('Cleaning up realtime notifications subscription on unmount');
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }

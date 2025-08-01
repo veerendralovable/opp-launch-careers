@@ -54,47 +54,59 @@ export const useUserPresence = () => {
       updatePresence('offline');
     };
 
+    // Clean up existing subscription
     if (channelRef.current) {
+      console.log('Cleaning up existing user presence subscription');
       supabase.removeChannel(channelRef.current);
       channelRef.current = null;
     }
 
     const channelName = `user-presence-${user.id}-${Date.now()}`;
     
-    const channel = supabase
-      .channel(channelName)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'analytics',
-        },
-        async (payload) => {
-          const { data } = await supabase
-            .from('analytics')
-            .select('*')
-            .eq('event_type', 'user_presence')
-            .gte('created_at', new Date(Date.now() - 5 * 60 * 1000).toISOString());
-          
-          const presenceData: UserPresence[] = (data || [])
-            .filter(item => item.metadata && typeof item.metadata === 'object')
-            .map(item => ({
-              user_id: item.user_id || '',
-              status: (item.metadata as any)?.status || 'offline',
-              last_seen: item.created_at,
-              current_page: (item.metadata as any)?.current_page,
-              metadata: item.metadata
-            }));
-          
-          if (mountedRef.current) {
-            setOnlineUsers(presenceData);
+    try {
+      const channel = supabase
+        .channel(channelName)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'analytics',
+          },
+          async (payload) => {
+            try {
+              const { data } = await supabase
+                .from('analytics')
+                .select('*')
+                .eq('event_type', 'user_presence')
+                .gte('created_at', new Date(Date.now() - 5 * 60 * 1000).toISOString());
+              
+              const presenceData: UserPresence[] = (data || [])
+                .filter(item => item.metadata && typeof item.metadata === 'object')
+                .map(item => ({
+                  user_id: item.user_id || '',
+                  status: (item.metadata as any)?.status || 'offline',
+                  last_seen: item.created_at,
+                  current_page: (item.metadata as any)?.current_page,
+                  metadata: item.metadata
+                }));
+              
+              if (mountedRef.current) {
+                setOnlineUsers(presenceData);
+              }
+            } catch (error) {
+              console.error('Error processing presence data:', error);
+            }
           }
-        }
-      )
-      .subscribe();
+        )
+        .subscribe((status) => {
+          console.log(`User presence subscription status: ${status}`);
+        });
 
-    channelRef.current = channel;
+      channelRef.current = channel;
+    } catch (error) {
+      console.error('Error setting up user presence subscription:', error);
+    }
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('beforeunload', handleBeforeUnload);
@@ -117,7 +129,7 @@ export const useUserPresence = () => {
       }
       
       if (channelRef.current) {
-        console.log('Cleaning up useUserPresence subscription');
+        console.log('Cleaning up user presence subscription on unmount');
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
