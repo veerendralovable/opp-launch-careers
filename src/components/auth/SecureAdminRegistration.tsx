@@ -66,8 +66,8 @@ const SecureAdminRegistration: React.FC = () => {
 
       if (validationError) throw validationError;
       
-      // Type cast the response to our expected interface
-      const response = validationResult as AdminRegistrationResponse;
+      // Type cast the response safely: first to unknown, then to our expected interface
+      const response = validationResult as unknown as AdminRegistrationResponse;
       
       if (!response.success) {
         setError(response.error || 'Invalid access code');
