@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -74,7 +75,7 @@ const GmailBulkEmailSystem = () => {
       const { data, error } = await query;
       if (error) throw error;
 
-      const typedData: Recipient[] = (data || []).map(item => ({
+      const typedData: Recipient[] = (data || []).map((item: any) => ({
         id: item.id || '',
         name: item.name || 'No Name',
         email: item.email || ''
@@ -122,7 +123,7 @@ const GmailBulkEmailSystem = () => {
         const batch = recipients.slice(i, i + batchSize);
         
         try {
-          const emailPromises = batch.map(async (recipient) => {
+          const emailPromises = batch.map(async (recipient: Recipient) => {
             const unsubscribeUrl = `${window.location.origin}/unsubscribe?user=${recipient.id}`;
             const emailHtml = createEmailTemplate(
               emailData.content.replace(/{{name}}/g, recipient.name || 'User'),
