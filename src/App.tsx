@@ -1,3 +1,4 @@
+
 import { Suspense, lazy } from 'react';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -35,6 +36,9 @@ const AdminSettings = lazy(() => import('@/pages/AdminSettings'));
 // Moderator pages
 const ModeratorDashboard = lazy(() => import('@/pages/ModeratorDashboard'));
 const ModeratorPending = lazy(() => import('@/pages/ModeratorPending'));
+const ModeratorApprovedContent = lazy(() => import('@/pages/ModeratorApprovedContent'));
+const ModeratorUsers = lazy(() => import('@/pages/ModeratorUsers'));
+const ModeratorNotifications = lazy(() => import('@/pages/ModeratorNotifications'));
 
 const NotFound = lazy(() => import('@/pages/NotFound'));
 
@@ -104,6 +108,11 @@ function App() {
                         <AdminDashboard />
                       </ProtectedRoute>
                     } />
+                    <Route path="/admin/opportunities" element={
+                      <ProtectedRoute requireAuth={true} requireAdmin={true}>
+                        <ModeratorPending />
+                      </ProtectedRoute>
+                    } />
                     <Route path="/admin/users" element={
                       <ProtectedRoute requireAuth={true} requireAdmin={true}>
                         <UserManagement />
@@ -114,7 +123,7 @@ function App() {
                         <AdminNotifications />
                       </ProtectedRoute>
                     } />
-                    <Route path="/admin/bulk-email" element={
+                    <Route path="/admin/email-campaigns" element={
                       <ProtectedRoute requireAuth={true} requireAdmin={true}>
                         <AdminBulkEmail />
                       </ProtectedRoute>
@@ -144,6 +153,21 @@ function App() {
                     <Route path="/moderator/pending" element={
                       <ProtectedRoute requireAuth={true} requireModerator={true}>
                         <ModeratorPending />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/moderator/approved" element={
+                      <ProtectedRoute requireAuth={true} requireModerator={true}>
+                        <ModeratorApprovedContent />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/moderator/users" element={
+                      <ProtectedRoute requireAuth={true} requireModerator={true}>
+                        <ModeratorUsers />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/moderator/notifications" element={
+                      <ProtectedRoute requireAuth={true} requireModerator={true}>
+                        <ModeratorNotifications />
                       </ProtectedRoute>
                     } />
 

@@ -9,7 +9,8 @@ import {
   Clock, 
   Settings,
   BarChart3,
-  Shield
+  Shield,
+  Bell
 } from 'lucide-react';
 
 const ModeratorNavigation = () => {
@@ -39,7 +40,7 @@ const ModeratorNavigation = () => {
     {
       path: '/moderator/notifications',
       label: 'Notifications',
-      icon: FileText
+      icon: Bell
     }
   ];
 
