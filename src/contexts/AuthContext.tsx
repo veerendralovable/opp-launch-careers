@@ -3,6 +3,8 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 import { User, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { createRateLimiter, validatePasswordStrength, validateInput } from '@/config/security';
+import { sanitizeText, sanitizeEmail } from '@/utils/sanitization';
 
 interface AuthContextType {
   user: User | null;
@@ -22,6 +24,9 @@ export const useAuth = () => {
   }
   return context;
 };
+
+// Rate limiter for login attempts
+const loginRateLimiter = createRateLimiter(5, 15 * 60 * 1000); // 5 attempts per 15 minutes
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -61,7 +66,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       console.log('Assigning role:', role, 'to user:', userId);
       
-      // Use the secure function to assign the role
       const { error } = await supabase.rpc('assign_role_secure', {
         _target_user_id: userId,
         _role: role
@@ -80,22 +84,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  // Secure auth state cleanup
+  // Enhanced auth state cleanup
   const cleanupAuthState = () => {
     console.log('Cleaning up auth state');
     
-    // Remove standard auth tokens
     try {
       localStorage.removeItem('supabase.auth.token');
       
-      // Remove all Supabase auth keys from localStorage
       Object.keys(localStorage).forEach((key) => {
         if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
           localStorage.removeItem(key);
         }
       });
       
-      // Remove from sessionStorage if in use
       if (typeof sessionStorage !== 'undefined') {
         Object.keys(sessionStorage).forEach((key) => {
           if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
@@ -111,7 +112,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     let mounted = true;
 
-    // Get initial session
     const getSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
@@ -119,7 +119,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           console.error('Error getting session:', error);
         } else if (session?.user && mounted) {
           setUser(session.user);
-          // Defer role fetching to prevent deadlocks
           setTimeout(() => {
             if (mounted) fetchUserRole(session.user.id);
           }, 100);
@@ -133,7 +132,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     getSession();
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth event:', event, session?.user?.email);
       
@@ -141,7 +139,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       if (session?.user) {
         setUser(session.user);
-        // Defer role fetching to prevent deadlocks
         setTimeout(() => {
           if (mounted) fetchUserRole(session.user.id);
         }, 100);
@@ -164,15 +161,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setLoading(true);
       console.log('Starting signup process for role:', role);
 
-      // Clean up any existing auth state
+      // Enhanced validation
+      if (!validateInput.email(email)) {
+        throw new Error('Please enter a valid email address');
+      }
+
+      if (!validateInput.noScripts(name)) {
+        throw new Error('Name contains invalid characters');
+      }
+
+      const passwordValidation = validatePasswordStrength(password);
+      if (!passwordValidation.isValid) {
+        throw new Error(passwordValidation.errors[0]);
+      }
+
       cleanupAuthState();
 
       const { data, error } = await supabase.auth.signUp({
-        email,
+        email: sanitizeEmail(email),
         password,
         options: {
           data: {
-            name: name,
+            name: sanitizeText(name),
             role: role
           },
           emailRedirectTo: `${window.location.origin}/`
@@ -181,25 +191,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (error) throw error;
 
-      // If user is created successfully
       if (data.user) {
         console.log('User created:', data.user.id, 'with requested role:', role);
         
-        // For admin role, we need to use the secure assignment
         if (role === 'admin') {
-          // The role assignment will be handled by the admin registration process
           console.log('Admin role assignment will be handled separately');
         } else {
-          // For other roles, assign immediately
           setTimeout(async () => {
             const roleAssigned = await assignUserRole(data.user!.id, role as 'user' | 'admin' | 'moderator');
             if (roleAssigned) {
               console.log('Role assignment completed successfully');
-              // Refresh the user role
               await fetchUserRole(data.user!.id);
             }
           }, 2000);
         }
+
+        // Log security event
+        await supabase.rpc('log_security_event', {
+          _event_type: 'user_registration',
+          _details: { 
+            email: sanitizeEmail(email), 
+            name: sanitizeText(name), 
+            role,
+            timestamp: new Date().toISOString()
+          },
+          _severity: 'info'
+        });
 
         toast({
           title: "Account created!",
@@ -220,35 +237,60 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setLoading(true);
       
-      // Clean up existing state
+      // Enhanced validation
+      if (!validateInput.email(email)) {
+        throw new Error('Please enter a valid email address');
+      }
+
+      const sanitizedEmail = sanitizeEmail(email);
+      
+      // Check rate limiting
+      const rateLimitResult = loginRateLimiter(sanitizedEmail);
+      if (!rateLimitResult.allowed) {
+        throw new Error('Too many login attempts. Please try again later.');
+      }
+      
       cleanupAuthState();
       
-      // Attempt global sign out
       try {
         await supabase.auth.signOut({ scope: 'global' });
       } catch (err) {
-        // Continue even if this fails
         console.log('Global signout failed, continuing with signin');
       }
       
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: sanitizedEmail,
         password,
       });
 
       if (error) throw error;
 
-      // Log security event
+      // Log successful login
       if (data.user) {
         await supabase.rpc('log_security_event', {
           _event_type: 'user_login',
-          _details: { email, login_time: new Date().toISOString() },
+          _details: { 
+            email: sanitizedEmail, 
+            login_time: new Date().toISOString(),
+            remaining_attempts: rateLimitResult.remainingAttempts
+          },
           _severity: 'info'
         });
       }
 
       return { error: null };
     } catch (error: any) {
+      // Log failed login attempt
+      await supabase.rpc('log_security_event', {
+        _event_type: 'login_failed',
+        _details: { 
+          email: sanitizeEmail(email), 
+          error: error.message,
+          timestamp: new Date().toISOString()
+        },
+        _severity: 'warning'
+      });
+      
       return { error };
     } finally {
       setLoading(false);
@@ -266,10 +308,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         _severity: 'info'
       });
       
-      // Clean up auth state
       cleanupAuthState();
       
-      // Attempt global sign out
       const { error } = await supabase.auth.signOut({ scope: 'global' });
       
       if (error) throw error;
@@ -282,7 +322,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         description: "You have been logged out of your account.",
       });
 
-      // Force page reload for clean state
       setTimeout(() => {
         window.location.href = '/auth';
       }, 500);

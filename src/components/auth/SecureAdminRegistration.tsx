@@ -8,12 +8,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Shield, Eye, EyeOff, Loader2 } from 'lucide-react';
-
-interface AdminRegistrationResponse {
-  success: boolean;
-  error?: string;
-  message?: string;
-}
+import { validatePasswordStrength, validateInput } from '@/config/security';
+import { sanitizeText } from '@/utils/sanitization';
 
 const SecureAdminRegistration: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -26,76 +22,134 @@ const SecureAdminRegistration: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
   const { signUp } = useAuth();
+
+  const validateForm = () => {
+    const errors: string[] = [];
+    
+    // Validate name
+    if (!formData.name.trim()) {
+      errors.push('Name is required');
+    } else if (!validateInput.noScripts(formData.name)) {
+      errors.push('Name contains invalid characters');
+    }
+    
+    // Validate email
+    if (!formData.email.trim()) {
+      errors.push('Email is required');
+    } else if (!validateInput.email(formData.email)) {
+      errors.push('Please enter a valid email address');
+    }
+    
+    // Validate password
+    const passwordValidation = validatePasswordStrength(formData.password);
+    if (!passwordValidation.isValid) {
+      errors.push(...passwordValidation.errors);
+    }
+    
+    // Validate password confirmation
+    if (formData.password !== formData.confirmPassword) {
+      errors.push('Passwords do not match');
+    }
+    
+    // Validate access code
+    if (!formData.accessCode.trim()) {
+      errors.push('Admin access code is required');
+    }
+    
+    return errors;
+  };
+
+  const handlePasswordChange = (password: string) => {
+    setFormData(prev => ({ ...prev, password }));
+    const validation = validatePasswordStrength(password);
+    setPasswordErrors(validation.errors);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    
+    const validationErrors = validateForm();
+    if (validationErrors.length > 0) {
+      setError(validationErrors[0]);
+      return;
+    }
+
     setLoading(true);
 
-    // Client-side validation
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      setLoading(false);
-      return;
-    }
-
-    if (formData.password.length < 8) {
-      setError('Password must be at least 8 characters long');
-      setLoading(false);
-      return;
-    }
-
-    if (!formData.accessCode) {
-      setError('Admin access code is required');
-      setLoading(false);
-      return;
-    }
-
     try {
-      // First validate the access code with our secure function
-      const { data: validationResult, error: validationError } = await supabase.rpc(
-        'register_admin_with_code',
+      // Validate access code using secure edge function
+      const { data: validationData, error: validationError } = await supabase.functions.invoke(
+        'validate-admin-code',
         {
-          _email: formData.email,
-          _password: formData.password,
-          _name: formData.name,
-          _access_code: formData.accessCode
+          body: {
+            accessCode: formData.accessCode,
+            role: 'admin'
+          }
         }
       );
 
       if (validationError) throw validationError;
       
-      // Type cast the response safely: first to unknown, then to our expected interface
-      const response = validationResult as unknown as AdminRegistrationResponse;
-      
-      if (!response.success) {
-        setError(response.error || 'Invalid access code');
-        setLoading(false);
+      if (!validationData?.success) {
+        setError(validationData?.error || 'Invalid access code');
+        await supabase.rpc('log_security_event', {
+          _event_type: 'admin_registration_failed',
+          _details: { 
+            email: sanitizeText(formData.email), 
+            reason: 'invalid_access_code',
+            timestamp: new Date().toISOString()
+          },
+          _severity: 'warning'
+        });
         return;
       }
 
-      // If access code is valid, proceed with user registration
+      // Proceed with user registration
       const { error: signUpError } = await signUp(
         formData.email,
         formData.password,
-        formData.name,
-        'admin' // This will be properly assigned by our secure function
+        sanitizeText(formData.name),
+        'admin'
       );
 
       if (signUpError) {
         setError(signUpError.message);
-      } else {
-        // Log security event
         await supabase.rpc('log_security_event', {
-          _event_type: 'admin_registration_attempt',
-          _details: { email: formData.email, name: formData.name },
+          _event_type: 'admin_registration_failed',
+          _details: { 
+            email: sanitizeText(formData.email), 
+            reason: 'signup_error',
+            error: signUpError.message,
+            timestamp: new Date().toISOString()
+          },
+          _severity: 'error'
+        });
+      } else {
+        // Log successful admin registration
+        await supabase.rpc('log_security_event', {
+          _event_type: 'admin_registration_success',
+          _details: { 
+            email: sanitizeText(formData.email),
+            timestamp: new Date().toISOString()
+          },
           _severity: 'info'
         });
       }
     } catch (err: any) {
       console.error('Admin registration error:', err);
-      setError(err.message || 'Registration failed. Please try again.');
+      setError('Registration failed. Please try again.');
+      await supabase.rpc('log_security_event', {
+        _event_type: 'admin_registration_error',
+        _details: { 
+          email: sanitizeText(formData.email),
+          error: err.message,
+          timestamp: new Date().toISOString()
+        },
+        _severity: 'error'
+      });
     } finally {
       setLoading(false);
     }
@@ -109,7 +163,7 @@ const SecureAdminRegistration: React.FC = () => {
         </div>
         <CardTitle className="text-2xl font-bold">Admin Registration</CardTitle>
         <p className="text-sm text-gray-600">
-          Secure admin account creation with access code validation
+          Secure admin account creation with enhanced validation
         </p>
       </CardHeader>
       <CardContent>
@@ -130,6 +184,7 @@ const SecureAdminRegistration: React.FC = () => {
               placeholder="Enter your full name"
               required
               disabled={loading}
+              maxLength={100}
             />
           </div>
 
@@ -143,6 +198,7 @@ const SecureAdminRegistration: React.FC = () => {
               placeholder="Enter your email"
               required
               disabled={loading}
+              maxLength={255}
             />
           </div>
 
@@ -153,10 +209,11 @@ const SecureAdminRegistration: React.FC = () => {
                 id="password"
                 type={showPassword ? "text" : "password"}
                 value={formData.password}
-                onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                onChange={(e) => handlePasswordChange(e.target.value)}
                 placeholder="Enter a strong password"
                 required
                 disabled={loading}
+                maxLength={128}
               />
               <button
                 type="button"
@@ -167,6 +224,13 @@ const SecureAdminRegistration: React.FC = () => {
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
+            {passwordErrors.length > 0 && (
+              <div className="mt-2 text-sm text-red-600">
+                {passwordErrors.map((error, index) => (
+                  <div key={index}>• {error}</div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div>
@@ -179,6 +243,7 @@ const SecureAdminRegistration: React.FC = () => {
               placeholder="Confirm your password"
               required
               disabled={loading}
+              maxLength={128}
             />
           </div>
 
@@ -189,16 +254,17 @@ const SecureAdminRegistration: React.FC = () => {
               type="password"
               value={formData.accessCode}
               onChange={(e) => setFormData(prev => ({ ...prev, accessCode: e.target.value }))}
-              placeholder="Enter admin access code"
+              placeholder="Enter secure admin access code"
               required
               disabled={loading}
+              maxLength={64}
             />
             <p className="text-xs text-gray-500 mt-1">
-              Contact system administrator for the access code
+              Contact system administrator for the secure access code
             </p>
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" className="w-full" disabled={loading || passwordErrors.length > 0}>
             {loading ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />

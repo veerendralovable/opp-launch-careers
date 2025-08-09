@@ -1,3 +1,4 @@
+import { sanitizeHtml, sanitizeText, sanitizeEmail, sanitizeUrl } from './sanitization';
 
 interface EmailConfig {
   service: 'resend' | 'zoho' | 'gmail';
@@ -25,20 +26,20 @@ interface LinkShortenerData {
   campaignId?: string;
 }
 
-// URL Shortener utility
+// Enhanced URL Shortener utility with security
 export const shortenUrl = async (originalUrl: string, campaignId?: string): Promise<string> => {
   try {
+    // Validate and sanitize URL
+    const sanitizedUrl = sanitizeUrl(originalUrl);
     const shortCode = Math.random().toString(36).substring(2, 8);
     
-    // Store the short link in your database (you'll need to implement this)
     const linkData: LinkShortenerData = {
-      originalUrl,
+      originalUrl: sanitizedUrl,
       shortCode,
       campaignId
     };
 
-    // For now, return a mock shortened URL
-    // In production, you'd store this in your database and return the actual short URL
+    // In production, store this in your database with proper security
     return `${window.location.origin}/go/${shortCode}`;
   } catch (error) {
     console.error('Error shortening URL:', error);
@@ -46,14 +47,18 @@ export const shortenUrl = async (originalUrl: string, campaignId?: string): Prom
   }
 };
 
-// Process email content to add tracking and shorten URLs
+// Enhanced email content processing with security
 export const processEmailContent = async (html: string, campaignId?: string, trackLinks: boolean = true): Promise<string> => {
-  if (!trackLinks) return html;
+  if (!trackLinks) {
+    return sanitizeHtml(html);
+  }
+
+  // Sanitize HTML first
+  let sanitizedHtml = sanitizeHtml(html);
 
   // Regular expression to find URLs in href attributes
   const urlRegex = /href="([^"]+)"/g;
-  let processedHtml = html;
-  const matches = [...html.matchAll(urlRegex)];
+  const matches = [...sanitizedHtml.matchAll(urlRegex)];
 
   for (const match of matches) {
     const originalUrl = match[1];
@@ -63,56 +68,89 @@ export const processEmailContent = async (html: string, campaignId?: string, tra
       continue;
     }
 
-    const shortenedUrl = await shortenUrl(originalUrl, campaignId);
-    processedHtml = processedHtml.replace(match[0], `href="${shortenedUrl}"`);
+    try {
+      const shortenedUrl = await shortenUrl(originalUrl, campaignId);
+      sanitizedHtml = sanitizedHtml.replace(match[0], `href="${shortenedUrl}"`);
+    } catch (error) {
+      console.error('Error processing URL:', originalUrl, error);
+      // Keep original URL if shortening fails
+    }
   }
 
-  return processedHtml;
+  return sanitizedHtml;
 };
 
 export const sendEmail = async (emailData: EmailData, config: EmailConfig) => {
-  // Process email content for link tracking
-  const processedHtml = await processEmailContent(
-    emailData.html, 
-    'bulk-campaign', 
-    emailData.trackLinks !== false
-  );
+  try {
+    // Validate and sanitize email data
+    const sanitizedData = {
+      ...emailData,
+      to: emailData.to.map(email => sanitizeEmail(email)),
+      subject: sanitizeText(emailData.subject),
+      html: await processEmailContent(emailData.html, 'bulk-campaign', emailData.trackLinks !== false),
+      from: emailData.from ? sanitizeEmail(emailData.from) : undefined
+    };
 
-  if (config.service === 'gmail') {
-    const response = await fetch('/api/send-gmail-email', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ...emailData,
-        html: processedHtml,
-        smtp: config.smtp
-      })
-    });
-    return response.json();
-  } else if (config.service === 'resend') {
-    // Use existing Resend integration
-    const response = await fetch('/api/send-email', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ...emailData,
-        html: processedHtml,
-        apiKey: config.apiKey
-      })
-    });
-    return response.json();
-  } else if (config.service === 'zoho') {
-    // Use Zoho SMTP integration
-    const response = await fetch('/api/send-zoho-email', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ...emailData,
-        html: processedHtml,
-        smtp: config.smtp
-      })
-    });
-    return response.json();
+    if (config.service === 'gmail') {
+      const response = await fetch('/api/send-gmail-email', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('supabase.auth.token')}`
+        },
+        body: JSON.stringify({
+          ...sanitizedData,
+          smtp: config.smtp
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Email sending failed: ${response.statusText}`);
+      }
+      
+      return response.json();
+    } else if (config.service === 'resend') {
+      const response = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('supabase.auth.token')}`
+        },
+        body: JSON.stringify({
+          ...sanitizedData,
+          apiKey: config.apiKey
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Email sending failed: ${response.statusText}`);
+      }
+      
+      return response.json();
+    } else if (config.service === 'zoho') {
+      const response = await fetch('/api/send-zoho-email', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('supabase.auth.token')}`
+        },
+        body: JSON.stringify({
+          ...sanitizedData,
+          smtp: config.smtp
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Email sending failed: ${response.statusText}`);
+      }
+      
+      return response.json();
+    }
+    
+    throw new Error('Unsupported email service');
+  } catch (error) {
+    console.error('Email sending error:', error);
+    throw error;
   }
 };
 
@@ -127,8 +165,12 @@ export const validateEmailConfig = (config: EmailConfig): boolean => {
   return false;
 };
 
-// Email templates with unsubscribe links
+// Enhanced email templates with proper sanitization
 export const createEmailTemplate = (content: string, recipientName: string, unsubscribeUrl: string): string => {
+  const sanitizedContent = sanitizeHtml(content);
+  const sanitizedName = sanitizeText(recipientName);
+  const sanitizedUnsubscribeUrl = sanitizeUrl(unsubscribeUrl);
+
   return `
     <!DOCTYPE html>
     <html>
@@ -144,15 +186,15 @@ export const createEmailTemplate = (content: string, recipientName: string, unsu
       </div>
       
       <div style="background: white; padding: 30px; border: 1px solid #e0e0e0; border-top: none;">
-        <p>Hello ${recipientName},</p>
+        <p>Hello ${sanitizedName},</p>
         
-        ${content}
+        ${sanitizedContent}
         
         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
           <p style="color: #666; font-size: 14px; text-align: center;">
             You're receiving this email because you signed up for OpportunityHub updates.
             <br>
-            <a href="${unsubscribeUrl}" style="color: #667eea; text-decoration: none;">Unsubscribe</a> | 
+            <a href="${sanitizedUnsubscribeUrl}" style="color: #667eea; text-decoration: none;">Unsubscribe</a> | 
             <a href="${window.location.origin}/contact" style="color: #667eea; text-decoration: none;">Contact Us</a>
           </p>
           <p style="color: #666; font-size: 12px; text-align: center; margin-top: 20px;">

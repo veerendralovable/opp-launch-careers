@@ -6,24 +6,13 @@ export const SECURITY_CONFIG = {
   MAX_LOGIN_ATTEMPTS: 5,
   LOCKOUT_DURATION: 15 * 60 * 1000, // 15 minutes
   
-  // Password requirements
+  // Enhanced password requirements
   MIN_PASSWORD_LENGTH: 8,
   REQUIRE_UPPERCASE: true,
   REQUIRE_LOWERCASE: true,
   REQUIRE_NUMBERS: true,
   REQUIRE_SPECIAL_CHARS: true,
 } as const;
-
-// Access codes - using 'rani' as the universal access code for both admin and moderator
-const getAccessCode = (role: 'admin' | 'moderator'): string => {
-  // Using 'rani' as the access code for both roles
-  return 'rani';
-};
-
-export const validateAccessCode = (code: string, role: 'admin' | 'moderator'): boolean => {
-  const expectedCode = getAccessCode(role);
-  return code === expectedCode;
-};
 
 export const validatePasswordStrength = (password: string): { isValid: boolean; errors: string[] } => {
   const errors: string[] = [];
@@ -54,24 +43,57 @@ export const validatePasswordStrength = (password: string): { isValid: boolean; 
   };
 };
 
-// Rate limiting helper
+// Rate limiting helper with enhanced security
 export const createRateLimiter = (maxAttempts: number, windowMs: number) => {
-  const attempts = new Map<string, { count: number; resetTime: number }>();
+  const attempts = new Map<string, { count: number; resetTime: number; blocked: boolean }>();
   
-  return (identifier: string): boolean => {
+  return (identifier: string): { allowed: boolean; remainingAttempts: number; resetTime: number } => {
     const now = Date.now();
     const entry = attempts.get(identifier);
     
     if (!entry || now > entry.resetTime) {
-      attempts.set(identifier, { count: 1, resetTime: now + windowMs });
-      return true;
+      const newEntry = { count: 1, resetTime: now + windowMs, blocked: false };
+      attempts.set(identifier, newEntry);
+      return { allowed: true, remainingAttempts: maxAttempts - 1, resetTime: newEntry.resetTime };
     }
     
-    if (entry.count >= maxAttempts) {
-      return false;
+    if (entry.blocked || entry.count >= maxAttempts) {
+      entry.blocked = true;
+      return { allowed: false, remainingAttempts: 0, resetTime: entry.resetTime };
     }
     
     entry.count++;
-    return true;
+    return { 
+      allowed: true, 
+      remainingAttempts: maxAttempts - entry.count, 
+      resetTime: entry.resetTime 
+    };
   };
+};
+
+// Input validation helpers
+export const validateInput = {
+  email: (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email.trim());
+  },
+  
+  phone: (phone: string): boolean => {
+    const phoneRegex = /^\+?[\d\s-()]{10,}$/;
+    return phoneRegex.test(phone.trim());
+  },
+  
+  url: (url: string): boolean => {
+    try {
+      new URL(url);
+      return true;
+    } catch {
+      return false;
+    }
+  },
+  
+  noScripts: (input: string): boolean => {
+    const scriptRegex = /<script|javascript:|vbscript:|on\w+\s*=/i;
+    return !scriptRegex.test(input);
+  }
 };
