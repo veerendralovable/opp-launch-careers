@@ -210,7 +210,7 @@ OpportunityHub`,
                 rows={10}
               />
               <p className="text-sm text-gray-500 mt-2">
-                Available variables: {{name}}, {{email}}, {{title}}, {{company}}, {{location}}, {{deadline}}, {{apply_link}}
+                Available variables: {'{{'}}name{'}}'}, {'{{'}}email{'}}'}, {'{{'}}title{'}}'}, {'{{'}}company{'}}'}, {'{{'}}location{'}}'}, {'{{'}}deadline{'}}'}, {'{{'}}apply_link{'}}'}
               </p>
             </div>
             

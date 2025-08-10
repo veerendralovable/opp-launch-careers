@@ -117,7 +117,7 @@ const App = () => {
                       <Route
                         path="/admin"
                         element={
-                          <ProtectedRoute requireRole="admin">
+                          <ProtectedRoute requireAdmin>
                             <AdminDashboard />
                           </ProtectedRoute>
                         }
@@ -125,7 +125,7 @@ const App = () => {
                       <Route
                         path="/admin/bulk-email"
                         element={
-                          <ProtectedRoute requireRole="admin">
+                          <ProtectedRoute requireAdmin>
                             <AdminBulkEmail />
                           </ProtectedRoute>
                         }
@@ -133,7 +133,7 @@ const App = () => {
                       <Route
                         path="/admin/email"
                         element={
-                          <ProtectedRoute requireRole="admin">
+                          <ProtectedRoute requireAdmin>
                             <AdminBulkEmail />
                           </ProtectedRoute>
                         }
@@ -141,7 +141,7 @@ const App = () => {
                       <Route
                         path="/admin/users"
                         element={
-                          <ProtectedRoute requireRole="admin">
+                          <ProtectedRoute requireAdmin>
                             <AdminUsers />
                           </ProtectedRoute>
                         }
@@ -149,7 +149,7 @@ const App = () => {
                       <Route
                         path="/admin/analytics"
                         element={
-                          <ProtectedRoute requireRole="admin">
+                          <ProtectedRoute requireAdmin>
                             <AdminAnalytics />
                           </ProtectedRoute>
                         }
@@ -157,7 +157,7 @@ const App = () => {
                       <Route
                         path="/admin/notifications"
                         element={
-                          <ProtectedRoute requireRole="admin">
+                          <ProtectedRoute requireAdmin>
                             <AdminNotifications />
                           </ProtectedRoute>
                         }
@@ -165,7 +165,7 @@ const App = () => {
                       <Route
                         path="/admin/settings"
                         element={
-                          <ProtectedRoute requireRole="admin">
+                          <ProtectedRoute requireAdmin>
                             <AdminSettings />
                           </ProtectedRoute>
                         }
@@ -175,7 +175,7 @@ const App = () => {
                       <Route
                         path="/moderator"
                         element={
-                          <ProtectedRoute requireRole="moderator">
+                          <ProtectedRoute requireModerator>
                             <ModeratorDashboard />
                           </ProtectedRoute>
                         }
@@ -183,7 +183,7 @@ const App = () => {
                       <Route
                         path="/moderator/pending"
                         element={
-                          <ProtectedRoute requireRole="moderator">
+                          <ProtectedRoute requireModerator>
                             <ModeratorPending />
                           </ProtectedRoute>
                         }
@@ -191,7 +191,7 @@ const App = () => {
                       <Route
                         path="/moderator/users"
                         element={
-                          <ProtectedRoute requireRole="moderator">
+                          <ProtectedRoute requireModerator>
                             <ModeratorUsers />
                           </ProtectedRoute>
                         }
@@ -199,7 +199,7 @@ const App = () => {
                       <Route
                         path="/moderator/approved"
                         element={
-                          <ProtectedRoute requireRole="moderator">
+                          <ProtectedRoute requireModerator>
                             <ModeratorApproved />
                           </ProtectedRoute>
                         }
