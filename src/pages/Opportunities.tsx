@@ -18,7 +18,8 @@ import {
   BookmarkCheck,
   Eye,
   Loader2,
-  Filter
+  Filter,
+  Briefcase
 } from 'lucide-react';
 
 const Opportunities = () => {

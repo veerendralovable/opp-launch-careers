@@ -18,8 +18,7 @@ import {
   Eye,
   Loader2,
   Filter,
-  GraduationCap,
-  DollarSign
+  GraduationCap
 } from 'lucide-react';
 
 const Scholarships = () => {
@@ -123,12 +122,6 @@ const Scholarships = () => {
                           </Badge>
                           {scholarship.featured && (
                             <Badge className="bg-purple-100 text-purple-800">Featured</Badge>
-                          )}
-                          {scholarship.amount && (
-                            <Badge variant="secondary">
-                              <DollarSign className="h-3 w-3 mr-1" />
-                              {scholarship.amount}
-                            </Badge>
                           )}
                         </div>
                         <Button
