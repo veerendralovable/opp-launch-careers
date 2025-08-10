@@ -302,12 +302,12 @@ const AdminBulkEmail = () => {
                     <div className="pt-4 border-t">
                       <h4 className="text-sm font-medium mb-2">Email Variables</h4>
                       <div className="space-y-1 text-xs text-gray-600">
-                        <div>{'{{'}}name{'}}'} - User's name</div>
-                        <div>{'{{'}}email{'}}'} - User's email</div>
-                        <div>{'{{'}}title{'}}'} - Opportunity title</div>
-                        <div>{'{{'}}company{'}}'} - Company name</div>
-                        <div>{'{{'}}location{'}}'} - Location</div>
-                        <div>{'{{'}}deadline{'}}'} - Application deadline</div>
+                        <div>{'{{name}}'} - User's name</div>
+                        <div>{'{{email}}'} - User's email</div>
+                        <div>{'{{title}}'} - Opportunity title</div>
+                        <div>{'{{company}}'} - Company name</div>
+                        <div>{'{{location}}'} - Location</div>
+                        <div>{'{{deadline}}'} - Application deadline</div>
                       </div>
                     </div>
                   </CardContent>
