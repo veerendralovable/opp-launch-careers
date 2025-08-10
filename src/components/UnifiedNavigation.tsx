@@ -19,7 +19,6 @@ import {
   Briefcase, 
   GraduationCap, 
   User, 
-  Settings, 
   LogOut, 
   Menu,
   X,
@@ -30,7 +29,8 @@ import {
   Bell,
   BookOpen,
   HelpCircle,
-  ChevronDown
+  ChevronDown,
+  Settings
 } from 'lucide-react';
 
 const UnifiedNavigation = () => {
@@ -54,19 +54,21 @@ const UnifiedNavigation = () => {
     { path: '/', label: 'Home', icon: Home },
     { path: '/opportunities', label: 'Jobs', icon: Briefcase },
     { path: '/scholarships', label: 'Scholarships', icon: GraduationCap },
-    { path: '/advanced-search', label: 'Search', icon: Search },
+    { path: '/search', label: 'Search', icon: Search },
   ];
 
   const adminNavItems = [
     { path: '/admin', label: 'Dashboard', icon: BarChart3 },
     { path: '/admin/users', label: 'Users', icon: Users },
-    { path: '/admin/bulk-email', label: 'Email', icon: Mail },
+    { path: '/admin/email', label: 'Email', icon: Mail },
     { path: '/admin/notifications', label: 'Notifications', icon: Bell },
+    { path: '/admin/settings', label: 'Settings', icon: Settings },
   ];
 
   const moderatorNavItems = [
-    { path: '/moderator', label: 'Moderator', icon: Shield },
+    { path: '/moderator', label: 'Dashboard', icon: Shield },
     { path: '/moderator/pending', label: 'Pending', icon: BookOpen },
+    { path: '/moderator/users', label: 'Users', icon: Users },
   ];
 
   return (
@@ -77,7 +79,7 @@ const UnifiedNavigation = () => {
           <div className="flex-shrink-0">
             <Link to="/" className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">OP</span>
+                <span className="text-white font-bold text-sm">OH</span>
               </div>
               <span className="font-bold text-lg text-gray-900 hidden sm:block">OpportunityHub</span>
             </Link>
@@ -176,6 +178,12 @@ const UnifiedNavigation = () => {
                       <Link to="/bookmarks" className="flex items-center">
                         <BookOpen className="mr-2 h-4 w-4" />
                         Bookmarks
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/submit" className="flex items-center">
+                        <Briefcase className="mr-2 h-4 w-4" />
+                        Submit Opportunity
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>

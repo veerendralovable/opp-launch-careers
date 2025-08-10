@@ -1,190 +1,223 @@
 
 import { Suspense, lazy } from 'react';
-import { Toaster } from '@/components/ui/sonner';
+import { Toaster } from '@/components/ui/toaster';
+import { Toaster as Sonner } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/AuthContext';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import UnifiedNavigation from '@/components/UnifiedNavigation';
+import Footer from '@/components/Footer';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorBoundary from '@/components/ErrorBoundary';
-import UnifiedNavigation from '@/components/UnifiedNavigation';
-import ProtectedRoute from '@/components/ProtectedRoute';
-import './App.css';
 
 // Lazy load components
-const Index = lazy(() => import('@/pages/Index'));
+const Home = lazy(() => import('@/pages/Home'));
 const Auth = lazy(() => import('@/pages/Auth'));
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
 const Opportunities = lazy(() => import('@/pages/Opportunities'));
 const OpportunityDetail = lazy(() => import('@/pages/OpportunityDetail'));
 const Scholarships = lazy(() => import('@/pages/Scholarships'));
-const Applications = lazy(() => import('@/pages/Applications'));
+const AdvancedSearch = lazy(() => import('@/pages/AdvancedSearch'));
 const Bookmarks = lazy(() => import('@/pages/Bookmarks'));
 const Profile = lazy(() => import('@/pages/Profile'));
 const Submit = lazy(() => import('@/pages/Submit'));
-const Notifications = lazy(() => import('@/pages/Notifications'));
-const AdvancedSearch = lazy(() => import('@/pages/AdvancedSearch'));
-
-// Admin pages
+const About = lazy(() => import('@/pages/About'));
+const Contact = lazy(() => import('@/pages/Contact'));
+const HelpCenter = lazy(() => import('@/pages/HelpCenter'));
+const Privacy = lazy(() => import('@/pages/Privacy'));
+const Terms = lazy(() => import('@/pages/Terms'));
+const Cookies = lazy(() => import('@/pages/Cookies'));
 const AdminDashboard = lazy(() => import('@/pages/AdminDashboard'));
-const UserManagement = lazy(() => import('@/pages/UserManagement'));
-const AdminNotifications = lazy(() => import('@/pages/AdminNotifications'));
 const AdminBulkEmail = lazy(() => import('@/pages/AdminBulkEmail'));
-const AdminExpired = lazy(() => import('@/pages/AdminExpired'));
+const AdminUsers = lazy(() => import('@/pages/UserManagement'));
 const AdminAnalytics = lazy(() => import('@/pages/AdminAnalytics'));
+const AdminNotifications = lazy(() => import('@/pages/AdminNotifications'));
 const AdminSettings = lazy(() => import('@/pages/AdminSettings'));
-
-// Moderator pages
 const ModeratorDashboard = lazy(() => import('@/pages/ModeratorDashboard'));
 const ModeratorPending = lazy(() => import('@/pages/ModeratorPending'));
-const ModeratorApprovedContent = lazy(() => import('@/pages/ModeratorApprovedContent'));
 const ModeratorUsers = lazy(() => import('@/pages/ModeratorUsers'));
-const ModeratorNotifications = lazy(() => import('@/pages/ModeratorNotifications'));
-
+const ModeratorApproved = lazy(() => import('@/pages/ModeratorApproved'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5, // 5 minutes
-      retry: 1,
+      retry: false,
     },
   },
 });
 
-function App() {
+const App = () => {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
+          <Toaster />
+          <Sonner />
           <BrowserRouter>
             <AuthProvider>
-              <div className="min-h-screen bg-gray-50">
+              <div className="min-h-screen flex flex-col">
                 <UnifiedNavigation />
-                
-                <Suspense fallback={<LoadingSpinner />}>
-                  <Routes>
-                    {/* Public routes */}
-                    <Route path="/" element={<Index />} />
-                    <Route path="/auth" element={<Auth />} />
-                    <Route path="/opportunities" element={<Opportunities />} />
-                    <Route path="/opportunities/:id" element={<OpportunityDetail />} />
-                    <Route path="/scholarships" element={<Scholarships />} />
-                    <Route path="/search/advanced" element={<AdvancedSearch />} />
+                <main className="flex-1">
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <Routes>
+                      <Route path="/" element={<Home />} />
+                      <Route path="/auth" element={<Auth />} />
+                      <Route path="/opportunities" element={<Opportunities />} />
+                      <Route path="/opportunities/:id" element={<OpportunityDetail />} />
+                      <Route path="/scholarships" element={<Scholarships />} />
+                      <Route path="/advanced-search" element={<AdvancedSearch />} />
+                      <Route path="/search" element={<AdvancedSearch />} />
+                      <Route path="/about" element={<About />} />
+                      <Route path="/contact" element={<Contact />} />
+                      <Route path="/help" element={<HelpCenter />} />
+                      <Route path="/help-center" element={<HelpCenter />} />
+                      <Route path="/privacy" element={<Privacy />} />
+                      <Route path="/terms" element={<Terms />} />
+                      <Route path="/cookies" element={<Cookies />} />
+                      
+                      {/* Protected Routes */}
+                      <Route
+                        path="/dashboard"
+                        element={
+                          <ProtectedRoute>
+                            <Dashboard />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/bookmarks"
+                        element={
+                          <ProtectedRoute>
+                            <Bookmarks />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/profile"
+                        element={
+                          <ProtectedRoute>
+                            <Profile />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/submit"
+                        element={
+                          <ProtectedRoute>
+                            <Submit />
+                          </ProtectedRoute>
+                        }
+                      />
 
-                    {/* Protected user routes */}
-                    <Route path="/dashboard" element={
-                      <ProtectedRoute requireAuth={true}>
-                        <Dashboard />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/applications" element={
-                      <ProtectedRoute requireAuth={true}>
-                        <Applications />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/bookmarks" element={
-                      <ProtectedRoute requireAuth={true}>
-                        <Bookmarks />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/profile" element={
-                      <ProtectedRoute requireAuth={true}>
-                        <Profile />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/submit" element={
-                      <ProtectedRoute requireAuth={true}>
-                        <Submit />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/notifications" element={
-                      <ProtectedRoute requireAuth={true}>
-                        <Notifications />
-                      </ProtectedRoute>
-                    } />
+                      {/* Admin Routes */}
+                      <Route
+                        path="/admin"
+                        element={
+                          <ProtectedRoute requireRole="admin">
+                            <AdminDashboard />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/admin/bulk-email"
+                        element={
+                          <ProtectedRoute requireRole="admin">
+                            <AdminBulkEmail />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/admin/email"
+                        element={
+                          <ProtectedRoute requireRole="admin">
+                            <AdminBulkEmail />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/admin/users"
+                        element={
+                          <ProtectedRoute requireRole="admin">
+                            <AdminUsers />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/admin/analytics"
+                        element={
+                          <ProtectedRoute requireRole="admin">
+                            <AdminAnalytics />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/admin/notifications"
+                        element={
+                          <ProtectedRoute requireRole="admin">
+                            <AdminNotifications />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/admin/settings"
+                        element={
+                          <ProtectedRoute requireRole="admin">
+                            <AdminSettings />
+                          </ProtectedRoute>
+                        }
+                      />
 
-                    {/* Admin routes */}
-                    <Route path="/admin" element={
-                      <ProtectedRoute requireAuth={true} requireAdmin={true}>
-                        <AdminDashboard />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/admin/opportunities" element={
-                      <ProtectedRoute requireAuth={true} requireAdmin={true}>
-                        <ModeratorPending />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/admin/users" element={
-                      <ProtectedRoute requireAuth={true} requireAdmin={true}>
-                        <UserManagement />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/admin/notifications" element={
-                      <ProtectedRoute requireAuth={true} requireAdmin={true}>
-                        <AdminNotifications />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/admin/email-campaigns" element={
-                      <ProtectedRoute requireAuth={true} requireAdmin={true}>
-                        <AdminBulkEmail />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/admin/expired" element={
-                      <ProtectedRoute requireAuth={true} requireAdmin={true}>
-                        <AdminExpired />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/admin/analytics" element={
-                      <ProtectedRoute requireAuth={true} requireAdmin={true}>
-                        <AdminAnalytics />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/admin/settings" element={
-                      <ProtectedRoute requireAuth={true} requireAdmin={true}>
-                        <AdminSettings />
-                      </ProtectedRoute>
-                    } />
+                      {/* Moderator Routes */}
+                      <Route
+                        path="/moderator"
+                        element={
+                          <ProtectedRoute requireRole="moderator">
+                            <ModeratorDashboard />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/moderator/pending"
+                        element={
+                          <ProtectedRoute requireRole="moderator">
+                            <ModeratorPending />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/moderator/users"
+                        element={
+                          <ProtectedRoute requireRole="moderator">
+                            <ModeratorUsers />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/moderator/approved"
+                        element={
+                          <ProtectedRoute requireRole="moderator">
+                            <ModeratorApproved />
+                          </ProtectedRoute>
+                        }
+                      />
 
-                    {/* Moderator routes */}
-                    <Route path="/moderator/dashboard" element={
-                      <ProtectedRoute requireAuth={true} requireModerator={true}>
-                        <ModeratorDashboard />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/moderator/pending" element={
-                      <ProtectedRoute requireAuth={true} requireModerator={true}>
-                        <ModeratorPending />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/moderator/approved" element={
-                      <ProtectedRoute requireAuth={true} requireModerator={true}>
-                        <ModeratorApprovedContent />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/moderator/users" element={
-                      <ProtectedRoute requireAuth={true} requireModerator={true}>
-                        <ModeratorUsers />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/moderator/notifications" element={
-                      <ProtectedRoute requireAuth={true} requireModerator={true}>
-                        <ModeratorNotifications />
-                      </ProtectedRoute>
-                    } />
-
-                    {/* 404 route */}
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </Suspense>
+                      {/* 404 Route */}
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </Suspense>
+                </main>
+                <Footer />
               </div>
-              <Toaster />
             </AuthProvider>
           </BrowserRouter>
         </TooltipProvider>
       </QueryClientProvider>
     </ErrorBoundary>
   );
-}
+};
 
 export default App;
