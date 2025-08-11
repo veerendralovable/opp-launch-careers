@@ -35,10 +35,13 @@ const AdminUsers = lazy(() => import('@/pages/UserManagement'));
 const AdminAnalytics = lazy(() => import('@/pages/AdminAnalytics'));
 const AdminNotifications = lazy(() => import('@/pages/AdminNotifications'));
 const AdminSettings = lazy(() => import('@/pages/AdminSettings'));
+const AdminMonetization = lazy(() => import('@/pages/AdminMonetization'));
+const AdminExpired = lazy(() => import('@/pages/AdminExpired'));
 const ModeratorDashboard = lazy(() => import('@/pages/ModeratorDashboard'));
 const ModeratorPending = lazy(() => import('@/pages/ModeratorPending'));
 const ModeratorUsers = lazy(() => import('@/pages/ModeratorUsers'));
 const ModeratorApproved = lazy(() => import('@/pages/ModeratorApproved'));
+const ModeratorApprovedContent = lazy(() => import('@/pages/ModeratorApprovedContent'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 
 const queryClient = new QueryClient({
@@ -123,6 +126,14 @@ const App = () => {
                         }
                       />
                       <Route
+                        path="/admin/dashboard"
+                        element={
+                          <ProtectedRoute requireAdmin>
+                            <AdminDashboard />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
                         path="/admin/bulk-email"
                         element={
                           <ProtectedRoute requireAdmin>
@@ -170,10 +181,34 @@ const App = () => {
                           </ProtectedRoute>
                         }
                       />
+                      <Route
+                        path="/admin/monetization"
+                        element={
+                          <ProtectedRoute requireAdmin>
+                            <AdminMonetization />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/admin/expired"
+                        element={
+                          <ProtectedRoute requireAdmin>
+                            <AdminExpired />
+                          </ProtectedRoute>
+                        }
+                      />
 
                       {/* Moderator Routes */}
                       <Route
                         path="/moderator"
+                        element={
+                          <ProtectedRoute requireModerator>
+                            <ModeratorDashboard />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/moderator/dashboard"
                         element={
                           <ProtectedRoute requireModerator>
                             <ModeratorDashboard />
@@ -200,7 +235,7 @@ const App = () => {
                         path="/moderator/approved"
                         element={
                           <ProtectedRoute requireModerator>
-                            <ModeratorApproved />
+                            <ModeratorApprovedContent />
                           </ProtectedRoute>
                         }
                       />
