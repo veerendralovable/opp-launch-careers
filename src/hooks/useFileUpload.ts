@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -39,22 +38,21 @@ export const useFileUpload = (options: FileUploadOptions) => {
       const fileName = `${user.id}/${Date.now()}.${fileExt}`;
       const filePath = options.folder ? `${options.folder}/${fileName}` : fileName;
 
-      // Use analytics table to track file uploads since file_uploads table doesn't exist
-      const { data: uploadRecord } = await supabase
+      // Track file upload in analytics
+      await supabase
         .from('analytics')
-        .insert([{
+        .insert({
           user_id: user.id,
           event_type: 'file_upload',
-          metadata: {
+          event_data: {
             file_name: file.name,
             file_path: filePath,
             file_size: file.size,
             file_type: file.type,
             upload_status: 'uploading'
-          }
-        }])
-        .select()
-        .single();
+          },
+          page_url: window.location.href
+        });
 
       // Upload to Supabase Storage
       const { data, error } = await supabase.storage
@@ -65,19 +63,6 @@ export const useFileUpload = (options: FileUploadOptions) => {
         });
 
       if (error) throw error;
-
-      // Update upload status
-      if (uploadRecord) {
-        await supabase
-          .from('analytics')
-          .update({ 
-            metadata: {
-              ...(uploadRecord.metadata as any),
-              upload_status: 'completed'
-            }
-          })
-          .eq('id', uploadRecord.id);
-      }
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage

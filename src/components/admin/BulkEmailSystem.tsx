@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,23 +17,18 @@ import {
   CheckCircle,
   AlertCircle,
   Loader2,
-  Eye,
   Calendar
 } from 'lucide-react';
-
-type UserRole = 'user' | 'admin' | 'moderator' | 'advertiser';
 
 interface EmailNotification {
   id: string;
   subject: string;
   content: string;
-  recipient_type: string;
-  target_roles: UserRole[];
+  target_audience: string;
   status: string;
   sent_count: number;
-  total_recipients: number;
   created_at: string;
-  sent_at?: string;
+  sent_at: string | null;
 }
 
 const BulkEmailSystem: React.FC = () => {
@@ -44,8 +38,7 @@ const BulkEmailSystem: React.FC = () => {
   const [newEmail, setNewEmail] = useState({
     subject: '',
     content: '',
-    recipient_type: 'all',
-    target_roles: [] as UserRole[]
+    target_audience: 'all'
   });
   const { toast } = useToast();
 
@@ -88,30 +81,26 @@ const BulkEmailSystem: React.FC = () => {
     try {
       setSending(true);
 
-      const targetRoles = newEmail.recipient_type === 'role_based' 
-        ? newEmail.target_roles 
-        : null;
-
-      const { data: notificationId, error } = await supabase.rpc('send_bulk_notification', {
-        _subject: newEmail.subject,
-        _content: newEmail.content,
-        _recipient_type: newEmail.recipient_type,
-        _target_roles: targetRoles
+      // Use send_bulk_notification function to create notifications
+      const { data, error } = await supabase.rpc('send_bulk_notification', {
+        _title: newEmail.subject,
+        _message: newEmail.content,
+        _type: 'info',
+        _target_role: newEmail.target_audience === 'all' ? null : newEmail.target_audience as any
       });
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: "Bulk notification created successfully",
+        description: `Notification sent to ${data} users`,
       });
 
       // Reset form
       setNewEmail({
         subject: '',
         content: '',
-        recipient_type: 'all',
-        target_roles: []
+        target_audience: 'all'
       });
 
       // Refresh the list
@@ -129,20 +118,6 @@ const BulkEmailSystem: React.FC = () => {
     }
   };
 
-  const handleRoleToggle = (role: UserRole, checked: boolean) => {
-    if (checked) {
-      setNewEmail(prev => ({ 
-        ...prev, 
-        target_roles: [...prev.target_roles, role] 
-      }));
-    } else {
-      setNewEmail(prev => ({ 
-        ...prev, 
-        target_roles: prev.target_roles.filter(r => r !== role) 
-      }));
-    }
-  };
-
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'sent':
@@ -157,7 +132,7 @@ const BulkEmailSystem: React.FC = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    const colors = {
+    const colors: Record<string, string> = {
       draft: 'bg-gray-100 text-gray-800',
       sending: 'bg-blue-100 text-blue-800',
       sent: 'bg-green-100 text-green-800',
@@ -165,13 +140,11 @@ const BulkEmailSystem: React.FC = () => {
     };
     
     return (
-      <Badge className={colors[status as keyof typeof colors] || colors.draft}>
+      <Badge className={colors[status] || colors.draft}>
         {status.toUpperCase()}
       </Badge>
     );
   };
-
-  const availableRoles: UserRole[] = ['user', 'moderator', 'admin', 'advertiser'];
 
   return (
     <div className="space-y-6">
@@ -180,38 +153,38 @@ const BulkEmailSystem: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Mail className="h-5 w-5" />
-            Create Bulk Email Notification
+            Create Bulk Notification
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="subject">Email Subject</Label>
+            <Label htmlFor="subject">Subject / Title</Label>
             <Input
               id="subject"
               value={newEmail.subject}
               onChange={(e) => setNewEmail(prev => ({ ...prev, subject: e.target.value }))}
-              placeholder="Enter email subject"
+              placeholder="Enter notification title"
               disabled={sending}
             />
           </div>
 
           <div>
-            <Label htmlFor="content">Email Content</Label>
+            <Label htmlFor="content">Message Content</Label>
             <Textarea
               id="content"
               value={newEmail.content}
               onChange={(e) => setNewEmail(prev => ({ ...prev, content: e.target.value }))}
-              placeholder="Enter your email message here..."
+              placeholder="Enter your message here..."
               rows={6}
               disabled={sending}
             />
           </div>
 
           <div>
-            <Label htmlFor="recipient_type">Recipients</Label>
+            <Label htmlFor="target_audience">Recipients</Label>
             <Select
-              value={newEmail.recipient_type}
-              onValueChange={(value) => setNewEmail(prev => ({ ...prev, recipient_type: value }))}
+              value={newEmail.target_audience}
+              onValueChange={(value) => setNewEmail(prev => ({ ...prev, target_audience: value }))}
               disabled={sending}
             >
               <SelectTrigger>
@@ -219,29 +192,12 @@ const BulkEmailSystem: React.FC = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Users</SelectItem>
-                <SelectItem value="role_based">Specific Roles</SelectItem>
+                <SelectItem value="user">Regular Users Only</SelectItem>
+                <SelectItem value="admin">Admins Only</SelectItem>
+                <SelectItem value="moderator">Moderators Only</SelectItem>
               </SelectContent>
             </Select>
           </div>
-
-          {newEmail.recipient_type === 'role_based' && (
-            <div>
-              <Label>Target Roles</Label>
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                {availableRoles.map(role => (
-                  <label key={role} className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      checked={newEmail.target_roles.includes(role)}
-                      onChange={(e) => handleRoleToggle(role, e.target.checked)}
-                      disabled={sending}
-                    />
-                    <span className="capitalize">{role}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          )}
 
           <Button 
             onClick={createBulkNotification}
@@ -251,24 +207,24 @@ const BulkEmailSystem: React.FC = () => {
             {sending ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Creating Notification...
+                Sending Notification...
               </>
             ) : (
               <>
                 <Send className="h-4 w-4 mr-2" />
-                Create Bulk Notification
+                Send Bulk Notification
               </>
             )}
           </Button>
         </CardContent>
       </Card>
 
-      {/* Email History Section */}
+      {/* Notification History Section */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            Email Notification History
+            Notification History
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -280,7 +236,7 @@ const BulkEmailSystem: React.FC = () => {
           ) : notifications.length === 0 ? (
             <div className="text-center py-8">
               <Mail className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">No email notifications yet</p>
+              <p className="text-gray-500">No notifications sent yet</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -301,10 +257,7 @@ const BulkEmailSystem: React.FC = () => {
                       <div className="flex items-center gap-4 text-xs text-gray-400">
                         <div className="flex items-center gap-1">
                           <Users className="h-3 w-3" />
-                          {notification.recipient_type === 'all' 
-                            ? 'All Users' 
-                            : `Roles: ${notification.target_roles?.join(', ') || 'None'}`
-                          }
+                          Target: {notification.target_audience || 'All Users'}
                         </div>
                         
                         <div className="flex items-center gap-1">
@@ -312,10 +265,10 @@ const BulkEmailSystem: React.FC = () => {
                           Created {new Date(notification.created_at).toLocaleDateString()}
                         </div>
 
-                        {notification.status === 'sent' && (
+                        {notification.sent_count > 0 && (
                           <div className="flex items-center gap-1">
                             <CheckCircle className="h-3 w-3" />
-                            Sent to {notification.sent_count}/{notification.total_recipients} users
+                            Sent to {notification.sent_count} users
                           </div>
                         )}
                       </div>
@@ -331,9 +284,8 @@ const BulkEmailSystem: React.FC = () => {
       <Alert>
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          <strong>Note:</strong> This system creates notification records that can be integrated 
-          with your email service (like Resend) to actually send emails. The notifications are 
-          stored and tracked but require additional email integration to deliver to users.
+          <strong>Note:</strong> This system sends in-app notifications to users. 
+          For email delivery, additional email service integration is required.
         </AlertDescription>
       </Alert>
     </div>

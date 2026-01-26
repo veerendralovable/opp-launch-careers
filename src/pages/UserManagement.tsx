@@ -80,7 +80,7 @@ const UserManagement = () => {
 
   const updateUserRole = async (userId: string, newRole: UserRole) => {
     try {
-      const { data, error } = await supabase.rpc('assign_user_role_secure', {
+      const { data, error } = await supabase.rpc('assign_user_role', {
         _user_id: userId,
         _role: newRole
       });

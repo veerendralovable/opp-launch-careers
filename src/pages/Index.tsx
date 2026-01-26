@@ -1,8 +1,7 @@
-
-import ProductionHomepage from './ProductionHomepage';
+import Home from './Home';
 
 const Index = () => {
-  return <ProductionHomepage />;
+  return <Home />;
 };
 
 export default Index;

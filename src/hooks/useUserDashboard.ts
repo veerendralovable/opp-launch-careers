@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -6,24 +5,23 @@ import { useAuth } from '@/contexts/AuthContext';
 interface UserDashboardStats {
   bookmarks: number;
   applications: number;
-  views: number;
+  profileViews: number;
   profileCompletion: number;
 }
 
 interface RecentActivity {
   id: string;
-  type: 'application' | 'bookmark' | 'view' | 'opportunity_view';
+  type: 'application' | 'bookmark';
   title: string;
-  date: string;
-  status: string;
-  opportunity_id?: string;
+  description: string;
+  created_at: string;
 }
 
 export const useUserDashboard = () => {
   const [stats, setStats] = useState<UserDashboardStats>({
     bookmarks: 0,
     applications: 0,
-    views: 0,
+    profileViews: 0,
     profileCompletion: 0
   });
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
@@ -31,51 +29,59 @@ export const useUserDashboard = () => {
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
 
+  const calculateProfileCompletion = useCallback((profile: any) => {
+    if (!profile) return 0;
+    
+    const fields = ['name', 'email', 'bio', 'college', 'location', 'skills', 'linkedin_url'];
+    const filledFields = fields.filter(field => {
+      const value = profile[field];
+      if (Array.isArray(value)) return value.length > 0;
+      return value && value.trim && value.trim().length > 0;
+    });
+    
+    return Math.round((filledFields.length / fields.length) * 100);
+  }, []);
+
   const fetchUserStats = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
 
     try {
       setLoading(true);
       setError(null);
 
       // Fetch bookmarks count
-      const { data: bookmarks, error: bookmarksError } = await supabase
+      const { count: bookmarksCount, error: bookmarksError } = await supabase
         .from('bookmarks')
-        .select('id')
+        .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id);
 
-      if (bookmarksError) throw bookmarksError;
+      if (bookmarksError) console.error('Bookmarks error:', bookmarksError);
 
       // Fetch applications count
-      const { data: applications, error: applicationsError } = await supabase
+      const { count: applicationsCount, error: applicationsError } = await supabase
         .from('applications')
-        .select('id')
+        .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id);
 
-      if (applicationsError) throw applicationsError;
+      if (applicationsError) console.error('Applications error:', applicationsError);
 
-      // Fetch recently viewed count (as proxy for views)
-      const { data: recentlyViewed, error: viewsError } = await supabase
-        .from('recently_viewed')
-        .select('id')
-        .eq('user_id', user.id);
-
-      if (viewsError) throw viewsError;
-
-      // Fetch profile completion
+      // Fetch profile for completion calculation
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('profile_completion_score')
+        .select('*')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (profileError) throw profileError;
+      if (profileError) console.error('Profile error:', profileError);
 
       setStats({
-        bookmarks: bookmarks?.length || 0,
-        applications: applications?.length || 0,
-        views: recentlyViewed?.length || 0,
-        profileCompletion: profile?.profile_completion_score || 0
+        bookmarks: bookmarksCount || 0,
+        applications: applicationsCount || 0,
+        profileViews: 0, // Will implement view tracking later
+        profileCompletion: calculateProfileCompletion(profile)
       });
 
     } catch (err: any) {
@@ -84,7 +90,7 @@ export const useUserDashboard = () => {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, calculateProfileCompletion]);
 
   const fetchRecentActivity = useCallback(async () => {
     if (!user) return;
@@ -92,97 +98,75 @@ export const useUserDashboard = () => {
     try {
       const activities: RecentActivity[] = [];
 
-      // Fetch recent applications
-      const { data: recentApplications } = await supabase
+      // Fetch recent applications with opportunity details
+      const { data: recentApplications, error: appError } = await supabase
         .from('applications')
         .select(`
           id,
           applied_at,
           status,
-          opportunities (
-            id,
-            title,
-            company
-          )
+          opportunity_id
         `)
         .eq('user_id', user.id)
         .order('applied_at', { ascending: false })
         .limit(5);
 
-      recentApplications?.forEach(app => {
-        if (app.opportunities) {
-          activities.push({
-            id: app.id,
-            type: 'application',
-            title: `Applied to ${app.opportunities.title} at ${app.opportunities.company}`,
-            date: new Date(app.applied_at).toLocaleDateString(),
-            status: app.status,
-            opportunity_id: app.opportunities.id
-          });
+      if (!appError && recentApplications) {
+        // Fetch opportunity details for applications
+        for (const app of recentApplications) {
+          const { data: opp } = await supabase
+            .from('opportunities')
+            .select('title, company')
+            .eq('id', app.opportunity_id)
+            .single();
+          
+          if (opp) {
+            activities.push({
+              id: app.id,
+              type: 'application',
+              title: `Applied to ${opp.title}`,
+              description: opp.company || 'Unknown company',
+              created_at: app.applied_at
+            });
+          }
         }
-      });
+      }
 
-      // Fetch recent bookmarks
-      const { data: recentBookmarks } = await supabase
+      // Fetch recent bookmarks with opportunity details
+      const { data: recentBookmarks, error: bookmarkError } = await supabase
         .from('bookmarks')
         .select(`
           id,
           created_at,
-          opportunities (
-            id,
-            title,
-            company
-          )
+          opportunity_id
         `)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(5);
 
-      recentBookmarks?.forEach(bookmark => {
-        if (bookmark.opportunities) {
-          activities.push({
-            id: bookmark.id,
-            type: 'bookmark',
-            title: `Bookmarked ${bookmark.opportunities.title}`,
-            date: new Date(bookmark.created_at).toLocaleDateString(),
-            status: 'saved',
-            opportunity_id: bookmark.opportunities.id
-          });
+      if (!bookmarkError && recentBookmarks) {
+        for (const bookmark of recentBookmarks) {
+          const { data: opp } = await supabase
+            .from('opportunities')
+            .select('title, company')
+            .eq('id', bookmark.opportunity_id)
+            .single();
+          
+          if (opp) {
+            activities.push({
+              id: bookmark.id,
+              type: 'bookmark',
+              title: `Bookmarked ${opp.title}`,
+              description: opp.company || 'Unknown company',
+              created_at: bookmark.created_at
+            });
+          }
         }
-      });
+      }
 
-      // Fetch recently viewed
-      const { data: recentViews } = await supabase
-        .from('recently_viewed')
-        .select(`
-          id,
-          viewed_at,
-          opportunities (
-            id,
-            title,
-            company
-          )
-        `)
-        .eq('user_id', user.id)
-        .order('viewed_at', { ascending: false })
-        .limit(5);
-
-      recentViews?.forEach(view => {
-        if (view.opportunities) {
-          activities.push({
-            id: view.id,
-            type: 'view',
-            title: `Viewed ${view.opportunities.title}`,
-            date: new Date(view.viewed_at || '').toLocaleDateString(),
-            status: 'viewed',
-            opportunity_id: view.opportunities.id
-          });
-        }
-      });
-
-      // Sort all activities by date and take the most recent 10
+      // Sort all activities by date
       const sortedActivities = activities
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
         .slice(0, 10);
 
       setRecentActivity(sortedActivities);
@@ -204,7 +188,7 @@ export const useUserDashboard = () => {
     if (!user) return;
 
     const bookmarksChannel = supabase
-      .channel('user-bookmarks')
+      .channel(`user-bookmarks-${user.id}`)
       .on(
         'postgres_changes',
         {
@@ -221,7 +205,7 @@ export const useUserDashboard = () => {
       .subscribe();
 
     const applicationsChannel = supabase
-      .channel('user-applications')
+      .channel(`user-applications-${user.id}`)
       .on(
         'postgres_changes',
         {
@@ -237,27 +221,9 @@ export const useUserDashboard = () => {
       )
       .subscribe();
 
-    const recentlyViewedChannel = supabase
-      .channel('user-recently-viewed')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'recently_viewed',
-          filter: `user_id=eq.${user.id}`
-        },
-        () => {
-          fetchUserStats();
-          fetchRecentActivity();
-        }
-      )
-      .subscribe();
-
     return () => {
       supabase.removeChannel(bookmarksChannel);
       supabase.removeChannel(applicationsChannel);
-      supabase.removeChannel(recentlyViewedChannel);
     };
   }, [user, fetchUserStats, fetchRecentActivity]);
 

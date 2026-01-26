@@ -1,10 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -60,10 +58,12 @@ const OpportunityDetail = () => {
       setOpportunity(data);
 
       // Increment view count
-      await supabase
-        .from('opportunities')
-        .update({ views: (data.views || 0) + 1 })
-        .eq('id', id);
+      if (data) {
+        await supabase
+          .from('opportunities')
+          .update({ view_count: (data.view_count || 0) + 1 })
+          .eq('id', id);
+      }
 
     } catch (error: any) {
       console.error('Error fetching opportunity:', error);
@@ -87,11 +87,11 @@ const OpportunityDetail = () => {
         .select('id')
         .eq('user_id', user.id)
         .eq('opportunity_id', id)
-        .single();
+        .maybeSingle();
 
       setIsBookmarked(!!data);
     } catch (error) {
-      // Not bookmarked
+      console.error('Error checking bookmark status:', error);
     }
   };
 
@@ -99,15 +99,13 @@ const OpportunityDetail = () => {
     if (!user || !id) return;
 
     try {
-      await supabase
-        .from('recently_viewed')
-        .upsert({
-          user_id: user.id,
-          opportunity_id: id,
-          viewed_at: new Date().toISOString()
-        }, {
-          onConflict: 'user_id,opportunity_id'
-        });
+      // Track view in analytics
+      await supabase.from('analytics').insert({
+        user_id: user.id,
+        event_type: 'opportunity_view',
+        event_data: { opportunity_id: id },
+        page_url: window.location.href
+      });
     } catch (error) {
       console.error('Error tracking view:', error);
     }
@@ -175,7 +173,6 @@ const OpportunityDetail = () => {
         // User cancelled sharing
       }
     } else {
-      // Fallback: copy to clipboard
       navigator.clipboard.writeText(window.location.href);
       toast({
         title: "Link copied!",
@@ -194,22 +191,22 @@ const OpportunityDetail = () => {
     }
   };
 
-  const isExpired = opportunity && new Date(opportunity.deadline) < new Date();
+  const isExpired = opportunity && opportunity.deadline && new Date(opportunity.deadline) < new Date();
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-muted/50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   if (!opportunity) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-muted/50 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Opportunity not found</h2>
-          <p className="text-gray-600 mb-4">The opportunity you're looking for doesn't exist or has been removed.</p>
+          <h2 className="text-2xl font-bold text-foreground mb-2">Opportunity not found</h2>
+          <p className="text-muted-foreground mb-4">The opportunity you're looking for doesn't exist or has been removed.</p>
           <Button onClick={() => navigate('/opportunities')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Opportunities
@@ -220,7 +217,7 @@ const OpportunityDetail = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
+    <div className="min-h-screen bg-muted/50 pb-20 md:pb-0">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
@@ -287,7 +284,7 @@ const OpportunityDetail = () => {
                     
                     <CardTitle className="text-2xl mb-3">{opportunity.title}</CardTitle>
                     
-                    <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                    <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                       {opportunity.company && (
                         <div className="flex items-center gap-1">
                           <Building className="h-4 w-4" />
@@ -321,7 +318,7 @@ const OpportunityDetail = () => {
                 {/* Description */}
                 <div>
                   <h3 className="text-lg font-semibold mb-2">Description</h3>
-                  <p className="text-gray-700 whitespace-pre-wrap">{opportunity.description}</p>
+                  <p className="text-muted-foreground whitespace-pre-wrap">{opportunity.description}</p>
                 </div>
 
                 {/* Requirements */}
@@ -330,7 +327,7 @@ const OpportunityDetail = () => {
                     <h3 className="text-lg font-semibold mb-2">Requirements</h3>
                     <ul className="list-disc list-inside space-y-1">
                       {opportunity.requirements.map((req: string, index: number) => (
-                        <li key={index} className="text-gray-700">{req}</li>
+                        <li key={index} className="text-muted-foreground">{req}</li>
                       ))}
                     </ul>
                   </div>
@@ -342,17 +339,9 @@ const OpportunityDetail = () => {
                     <h3 className="text-lg font-semibold mb-2">Benefits</h3>
                     <ul className="list-disc list-inside space-y-1">
                       {opportunity.benefits.map((benefit: string, index: number) => (
-                        <li key={index} className="text-gray-700">{benefit}</li>
+                        <li key={index} className="text-muted-foreground">{benefit}</li>
                       ))}
                     </ul>
-                  </div>
-                )}
-
-                {/* Application Instructions */}
-                {opportunity.application_instructions && (
-                  <div>
-                    <h3 className="text-lg font-semibold mb-2">How to Apply</h3>
-                    <p className="text-gray-700 whitespace-pre-wrap">{opportunity.application_instructions}</p>
                   </div>
                 )}
 
@@ -381,80 +370,39 @@ const OpportunityDetail = () => {
                 <CardTitle className="text-lg">Key Details</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <Calendar className="h-5 w-5 text-gray-500" />
-                  <div>
-                    <p className="text-sm font-medium">Deadline</p>
-                    <p className={`text-sm ${isExpired ? 'text-red-600' : 'text-gray-600'}`}>
-                      {new Date(opportunity.deadline).toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
-
-                {opportunity.application_deadline && (
+                {opportunity.deadline && (
                   <div className="flex items-center gap-3">
-                    <Clock className="h-5 w-5 text-gray-500" />
+                    <Calendar className="h-5 w-5 text-muted-foreground" />
                     <div>
-                      <p className="text-sm font-medium">Application Deadline</p>
-                      <p className="text-sm text-gray-600">
-                        {new Date(opportunity.application_deadline).toLocaleDateString()}
+                      <p className="text-sm font-medium">Deadline</p>
+                      <p className={`text-sm ${isExpired ? 'text-destructive' : 'text-muted-foreground'}`}>
+                        {new Date(opportunity.deadline).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
                 )}
 
-                {opportunity.salary_range && (
+                {(opportunity.salary_min || opportunity.salary_max) && (
                   <div className="flex items-center gap-3">
-                    <DollarSign className="h-5 w-5 text-gray-500" />
+                    <DollarSign className="h-5 w-5 text-muted-foreground" />
                     <div>
                       <p className="text-sm font-medium">Salary Range</p>
-                      <p className="text-sm text-gray-600">{opportunity.salary_range}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {opportunity.salary_currency || 'USD'} {opportunity.salary_min?.toLocaleString()} - {opportunity.salary_max?.toLocaleString()}
+                      </p>
                     </div>
                   </div>
                 )}
 
                 <div className="flex items-center gap-3">
-                  <Eye className="h-5 w-5 text-gray-500" />
+                  <Eye className="h-5 w-5 text-muted-foreground" />
                   <div>
                     <p className="text-sm font-medium">Views</p>
-                    <p className="text-sm text-gray-600">{opportunity.views || 0}</p>
+                    <p className="text-sm text-muted-foreground">{opportunity.view_count || 0}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
-
-            {/* Contact Information */}
-            {(opportunity.contact_email || opportunity.contact_phone) && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Contact</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {opportunity.contact_email && (
-                    <div className="flex items-center gap-3">
-                      <Mail className="h-4 w-4 text-gray-500" />
-                      <a 
-                        href={`mailto:${opportunity.contact_email}`}
-                        className="text-sm text-blue-600 hover:underline"
-                      >
-                        {opportunity.contact_email}
-                      </a>
-                    </div>
-                  )}
-                  {opportunity.contact_phone && (
-                    <div className="flex items-center gap-3">
-                      <Phone className="h-4 w-4 text-gray-500" />
-                      <a 
-                        href={`tel:${opportunity.contact_phone}`}
-                        className="text-sm text-blue-600 hover:underline"
-                      >
-                        {opportunity.contact_phone}
-                      </a>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
 
             {/* Action Button */}
             <Card>
@@ -469,7 +417,7 @@ const OpportunityDetail = () => {
                   {isExpired ? 'Opportunity Expired' : 'Apply Now'}
                 </Button>
                 
-                <p className="text-xs text-gray-500 text-center mt-2">
+                <p className="text-xs text-muted-foreground text-center mt-2">
                   You'll be redirected to the original posting
                 </p>
               </CardContent>

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -6,13 +5,13 @@ import { toast } from 'sonner';
 
 interface RealtimeNotification {
   id: string;
-  user_id?: string;
+  user_id: string;
   title: string;
   message: string;
   type: string;
   created_at: string;
   is_read: boolean;
-  action_url?: string;
+  action_url: string | null;
 }
 
 export const useRealtimeNotifications = () => {
@@ -20,108 +19,95 @@ export const useRealtimeNotifications = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
-  const channelRef = useRef<any>(null);
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const mountedRef = useRef(true);
-  const subscribedRef = useRef(false);
 
   const cleanup = useCallback(() => {
-    if (channelRef.current && subscribedRef.current) {
+    if (channelRef.current) {
       console.log('Cleaning up realtime notifications subscription');
-      try {
-        supabase.removeChannel(channelRef.current);
-      } catch (error) {
-        console.error('Error removing realtime channel:', error);
-      }
+      supabase.removeChannel(channelRef.current);
       channelRef.current = null;
-      subscribedRef.current = false;
     }
   }, []);
 
-  useEffect(() => {
-    if (!user || subscribedRef.current) return;
+  const fetchNotifications = useCallback(async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
 
-    const fetchNotifications = async () => {
-      try {
-        const { data } = await supabase
-          .from('notifications')
-          .select('*')
-          .or(`user_id.eq.${user.id},user_id.is.null`)
-          .order('created_at', { ascending: false })
-          .limit(50);
+    try {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(50);
 
-        if (data && mountedRef.current) {
-          setNotifications(data);
-          setUnreadCount(data.filter(n => !n.is_read).length);
-        }
-      } catch (error) {
-        console.error('Error fetching notifications:', error);
-      } finally {
-        if (mountedRef.current) {
-          setLoading(false);
-        }
+      if (error) throw error;
+
+      if (data && mountedRef.current) {
+        setNotifications(data);
+        setUnreadCount(data.filter(n => !n.is_read).length);
       }
-    };
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    } finally {
+      if (mountedRef.current) {
+        setLoading(false);
+      }
+    }
+  }, [user]);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    
+    if (!user) {
+      setNotifications([]);
+      setUnreadCount(0);
+      setLoading(false);
+      return;
+    }
 
     fetchNotifications();
 
     // Clean up existing subscription
     cleanup();
 
-    const channelName = `notifications-realtime-${user.id}-${Date.now()}`;
+    const channelName = `notifications-${user.id}-${Date.now()}`;
     
-    try {
-      const channel = supabase.channel(channelName);
-      
-      channel
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'notifications',
-            filter: `user_id=eq.${user.id}`
-          },
-          (payload) => {
-            const newNotification = payload.new as RealtimeNotification;
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          const newNotification = payload.new as RealtimeNotification;
+          
+          if (mountedRef.current) {
+            setNotifications(prev => [newNotification, ...prev.slice(0, 49)]);
+            setUnreadCount(prev => prev + 1);
             
-            if (mountedRef.current) {
-              setNotifications(prev => [newNotification, ...prev.slice(0, 49)]);
-              setUnreadCount(prev => prev + 1);
-              
-              toast(newNotification.title, {
-                description: newNotification.message,
-                action: newNotification.action_url ? {
-                  label: 'View',
-                  onClick: () => window.open(newNotification.action_url, '_blank')
-                } : undefined,
-              });
-            }
+            toast(newNotification.title, {
+              description: newNotification.message,
+            });
           }
-        )
-        .subscribe((status) => {
-          console.log(`Realtime notifications subscription status: ${status}`);
-          if (status === 'SUBSCRIBED') {
-            subscribedRef.current = true;
-          }
-        });
+        }
+      )
+      .subscribe();
 
-      channelRef.current = channel;
-    } catch (error) {
-      console.error('Error setting up realtime notifications:', error);
-    }
+    channelRef.current = channel;
 
     return () => {
       mountedRef.current = false;
       cleanup();
     };
-  }, [user?.id, cleanup]);
-
-  useEffect(() => {
-    return () => {
-      mountedRef.current = false;
-      cleanup();
-    };
-  }, [cleanup]);
+  }, [user?.id, fetchNotifications, cleanup]);
 
   const markAsRead = async (notificationId: string) => {
     try {
@@ -142,11 +128,13 @@ export const useRealtimeNotifications = () => {
   };
 
   const markAllAsRead = async () => {
+    if (!user) return;
+    
     try {
       await supabase
         .from('notifications')
         .update({ is_read: true })
-        .or(`user_id.eq.${user?.id},user_id.is.null`)
+        .eq('user_id', user.id)
         .eq('is_read', false);
 
       if (mountedRef.current) {
@@ -163,6 +151,7 @@ export const useRealtimeNotifications = () => {
     unreadCount,
     loading,
     markAsRead,
-    markAllAsRead
+    markAllAsRead,
+    refetch: fetchNotifications
   };
 };

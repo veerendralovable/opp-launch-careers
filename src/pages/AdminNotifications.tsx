@@ -71,30 +71,15 @@ const AdminNotifications = () => {
 
         if (usersError) throw usersError;
 
-        // Create notifications for all users
-        const notifications = users?.map(user => ({
-          user_id: user.id,
-          title: newNotification.title,
-          message: newNotification.message,
-          type: newNotification.type
-        })) || [];
-
-        const { error } = await supabase
-          .from('notifications')
-          .insert(notifications);
-
-        if (error) throw error;
-      } else {
-        // Send to specific user (implementation would need user selection)
-        const { error } = await supabase
-          .from('notifications')
-          .insert({
+        // Create notifications for all users one by one
+        for (const u of users || []) {
+          await supabase.from('notifications').insert({
+            user_id: u.id,
             title: newNotification.title,
             message: newNotification.message,
             type: newNotification.type
           });
-
-        if (error) throw error;
+        }
       }
 
       toast({
