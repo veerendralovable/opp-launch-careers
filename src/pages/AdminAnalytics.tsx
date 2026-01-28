@@ -1,8 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import ProtectedRoute from '@/components/ProtectedRoute';
-import BackButton from '@/components/BackButton';
+import AdminNavigation from '@/components/AdminNavigation';
 import { supabase } from '@/integrations/supabase/client';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
 import { TrendingUp, Users, FileText, Activity, Calendar } from 'lucide-react';
@@ -89,21 +88,17 @@ const AdminAnalytics = () => {
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28'];
 
   return (
-    <ProtectedRoute requireAuth={true} requireAdmin={true}>
-      <div className="min-h-screen bg-gray-50">
-        <div className="bg-white border-b">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="flex items-center gap-4">
-              <BackButton to="/admin" />
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">Platform Analytics</h1>
-                <p className="text-gray-600 mt-2">Comprehensive platform insights and metrics</p>
-              </div>
-            </div>
-          </div>
+    <div className="min-h-screen bg-muted/30">
+      <div className="bg-card border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <h1 className="text-2xl font-bold text-foreground">Platform Analytics</h1>
+          <p className="text-muted-foreground mt-1">Comprehensive platform insights and metrics</p>
         </div>
+      </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <AdminNavigation />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <Card>
@@ -236,7 +231,6 @@ const AdminAnalytics = () => {
           </Card>
         </div>
       </div>
-    </ProtectedRoute>
   );
 };
 

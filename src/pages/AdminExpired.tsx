@@ -4,8 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
-import ProtectedRoute from '@/components/ProtectedRoute';
-import BackButton from '@/components/BackButton';
+import AdminNavigation from '@/components/AdminNavigation';
 import { AlertTriangle, Calendar, Trash2, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Database } from '@/integrations/supabase/types';
@@ -92,21 +91,17 @@ const AdminExpired = () => {
   };
 
   return (
-    <ProtectedRoute requireAuth={true} requireAdmin={true}>
-      <div className="min-h-screen bg-gray-50">
-        <div className="bg-white border-b">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="flex items-center gap-4">
-              <BackButton to="/admin" />
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">Expired Content Management</h1>
-                <p className="text-gray-600 mt-2">Manage expired opportunities and content</p>
-              </div>
-            </div>
-          </div>
+    <div className="min-h-screen bg-muted/30">
+      <div className="bg-card border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <h1 className="text-2xl font-bold text-foreground">Expired Content Management</h1>
+          <p className="text-muted-foreground mt-1">Manage expired opportunities and content</p>
         </div>
+      </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <AdminNavigation />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-red-500" />
@@ -176,7 +171,6 @@ const AdminExpired = () => {
           </div>
         </div>
       </div>
-    </ProtectedRoute>
   );
 };
 

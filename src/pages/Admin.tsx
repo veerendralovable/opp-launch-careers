@@ -3,10 +3,11 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useAdmin } from '@/hooks/useAdmin';
 import { useToast } from '@/hooks/use-toast';
+import AdminNavigation from '@/components/AdminNavigation';
+import LoadingSpinner from '@/components/LoadingSpinner';
 import { 
   Clock, 
   CheckCircle, 
@@ -59,14 +60,7 @@ const Admin = () => {
   }
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading opportunities...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner fullScreen size="lg" message="Loading opportunities..." />;
   }
 
   if (error) {
@@ -158,13 +152,15 @@ const Admin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <h1 className="text-3xl font-bold text-gray-900">Opportunity Management</h1>
-          <p className="text-gray-600 mt-2">Review and moderate submitted opportunities</p>
+    <div className="min-h-screen bg-muted/30">
+      <div className="bg-card border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <h1 className="text-2xl font-bold text-foreground">Opportunity Management</h1>
+          <p className="text-muted-foreground mt-1">Review and moderate submitted opportunities</p>
         </div>
       </div>
+
+      <AdminNavigation />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {pendingOpportunities.length === 0 ? (

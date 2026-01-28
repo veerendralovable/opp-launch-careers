@@ -23,7 +23,7 @@ const AdminNavigation = () => {
     { href: '/admin/users', label: 'Users', icon: Users },
     { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
     { href: '/admin/notifications', label: 'Notifications', icon: Bell },
-    { href: '/admin/email-campaigns', label: 'Email Campaigns', icon: Mail },
+    { href: '/admin/email', label: 'Email Campaigns', icon: Mail },
     { href: '/admin/expired', label: 'Expired', icon: Archive },
     { href: '/admin/monetization', label: 'Monetization', icon: DollarSign },
     { href: '/admin/settings', label: 'Settings', icon: Settings },

@@ -82,16 +82,16 @@ const EnhancedAuthPage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/10 flex items-center justify-center p-4">
       <div className="w-full max-w-5xl grid md:grid-cols-2 gap-8 items-center">
         {/* Left side - Branding */}
-        <div className="hidden md:block space-y-8">
+        <div className="hidden md:block space-y-8 animate-fade-in">
           <div>
             <div className="flex items-center space-x-3 mb-6">
-              <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center shadow-lg">
-                <span className="text-primary-foreground font-bold text-lg">OH</span>
+              <div className="w-14 h-14 bg-gradient-to-br from-primary to-primary/70 rounded-xl flex items-center justify-center shadow-lg shadow-primary/25">
+                <span className="text-primary-foreground font-bold text-xl">OH</span>
               </div>
-              <h1 className="text-3xl font-bold text-foreground">OpportunityHub</h1>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">OpportunityHub</h1>
             </div>
             <p className="text-xl text-muted-foreground leading-relaxed">
               Your gateway to endless opportunities. Connect with top companies, discover scholarships, 
@@ -101,43 +101,43 @@ const EnhancedAuthPage: React.FC = () => {
           
           <div className="space-y-4">
             {features.map((feature, index) => (
-              <div key={index} className="flex items-center space-x-4 p-4 bg-card rounded-xl border shadow-sm">
-                <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <feature.icon className="h-5 w-5 text-primary" />
+              <div key={index} className="flex items-center space-x-4 p-4 bg-card/80 backdrop-blur-sm rounded-xl border shadow-sm hover:shadow-md transition-all duration-300 hover:scale-[1.02]">
+                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                  <feature.icon className="h-6 w-6 text-primary" />
                 </div>
                 <span className="text-foreground font-medium">{feature.text}</span>
               </div>
             ))}
           </div>
 
-          <div className="p-6 bg-gradient-to-r from-primary/10 to-primary/5 rounded-xl border">
-            <p className="text-sm text-muted-foreground italic">
+          <div className="p-6 bg-gradient-to-r from-primary/10 to-primary/5 rounded-xl border backdrop-blur-sm">
+            <p className="text-sm text-muted-foreground italic leading-relaxed">
               "OpportunityHub helped me land my dream internship at a Fortune 500 company. 
               The platform made it easy to discover and apply to opportunities that matched my skills."
             </p>
-            <p className="text-sm font-medium text-foreground mt-3">— Sarah J., Software Engineer</p>
+            <p className="text-sm font-semibold text-foreground mt-4">— Sarah J., Software Engineer</p>
           </div>
         </div>
 
         {/* Right side - Auth Forms */}
-        <div className="w-full max-w-md mx-auto">
+        <div className="w-full max-w-md mx-auto animate-scale-in">
           <div className="text-center mb-6 md:hidden">
             <div className="flex items-center justify-center space-x-2 mb-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary/80 rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold">OH</span>
+              <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary/70 rounded-xl flex items-center justify-center shadow-lg shadow-primary/25">
+                <span className="text-primary-foreground font-bold text-lg">OH</span>
               </div>
-              <h1 className="text-2xl font-bold text-foreground">OpportunityHub</h1>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">OpportunityHub</h1>
             </div>
             <p className="text-muted-foreground">Your gateway to endless opportunities</p>
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-4">
-              <TabsTrigger value="login" className="text-sm font-medium">
+            <TabsList className="grid w-full grid-cols-2 mb-6 h-12">
+              <TabsTrigger value="login" className="text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <User className="h-4 w-4 mr-2" />
                 Sign In
               </TabsTrigger>
-              <TabsTrigger value="signup" className="text-sm font-medium">
+              <TabsTrigger value="signup" className="text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <UserPlus className="h-4 w-4 mr-2" />
                 Sign Up
               </TabsTrigger>
@@ -145,7 +145,7 @@ const EnhancedAuthPage: React.FC = () => {
 
             {/* Login Tab */}
             <TabsContent value="login">
-              <Card className="border-0 shadow-xl">
+              <Card className="border shadow-xl bg-card/95 backdrop-blur-sm">
                 <CardHeader className="space-y-1">
                   <CardTitle className="text-2xl font-bold text-center">Welcome back</CardTitle>
                   <CardDescription className="text-center">
@@ -215,7 +215,7 @@ const EnhancedAuthPage: React.FC = () => {
 
             {/* Signup Tab */}
             <TabsContent value="signup">
-              <Card className="border-0 shadow-xl">
+              <Card className="border shadow-xl bg-card/95 backdrop-blur-sm">
                 <CardHeader className="space-y-1">
                   <CardTitle className="text-2xl font-bold text-center">Create an account</CardTitle>
                   <CardDescription className="text-center">

@@ -59,6 +59,7 @@ const UnifiedNavigation = () => {
 
   const adminNavItems = [
     { path: '/admin', label: 'Dashboard', icon: BarChart3 },
+    { path: '/admin/opportunities', label: 'Opportunities', icon: Briefcase },
     { path: '/admin/users', label: 'Users', icon: Users },
     { path: '/admin/email', label: 'Email', icon: Mail },
     { path: '/admin/notifications', label: 'Notifications', icon: Bell },

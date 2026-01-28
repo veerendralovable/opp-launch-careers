@@ -30,6 +30,7 @@ const Privacy = lazy(() => import('@/pages/Privacy'));
 const Terms = lazy(() => import('@/pages/Terms'));
 const Cookies = lazy(() => import('@/pages/Cookies'));
 const AdminDashboard = lazy(() => import('@/pages/AdminDashboard'));
+const AdminOpportunities = lazy(() => import('@/pages/Admin'));
 const AdminBulkEmail = lazy(() => import('@/pages/AdminBulkEmail'));
 const AdminUsers = lazy(() => import('@/pages/UserManagement'));
 const AdminAnalytics = lazy(() => import('@/pages/AdminAnalytics'));
@@ -132,6 +133,14 @@ const App = () => {
                         element={
                           <ProtectedRoute requireAdmin>
                             <AdminDashboard />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/admin/opportunities"
+                        element={
+                          <ProtectedRoute requireAdmin>
+                            <AdminOpportunities />
                           </ProtectedRoute>
                         }
                       />

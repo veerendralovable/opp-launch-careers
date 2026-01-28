@@ -6,13 +6,14 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import AdminNavigation from '@/components/AdminNavigation';
+import LoadingSpinner from '@/components/LoadingSpinner';
 import { 
   Users, 
   Search, 
   Shield, 
   Crown, 
   User,
-  Loader2,
   AlertTriangle,
   Megaphone
 } from 'lucide-react';
@@ -148,32 +149,27 @@ const UserManagement = () => {
   }
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading users...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner fullScreen size="lg" message="Loading users..." />;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-muted/30">
+      <div className="bg-card border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-              <p className="text-gray-600 mt-2">Manage platform users and their roles</p>
+              <h1 className="text-2xl font-bold text-foreground">User Management</h1>
+              <p className="text-muted-foreground mt-1">Manage platform users and their roles</p>
             </div>
             <div className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-gray-500" />
-              <span className="text-sm text-gray-600">{users.length} total users</span>
+              <Users className="h-5 w-5 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">{users.length} total users</span>
             </div>
           </div>
         </div>
       </div>
+
+      <AdminNavigation />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
