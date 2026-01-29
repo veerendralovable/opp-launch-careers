@@ -52,12 +52,12 @@ const Opportunities = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b">
+    <div className="min-h-screen bg-muted/30">
+      <div className="bg-card border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">Career Opportunities</h1>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+            <h1 className="text-3xl font-bold text-foreground mb-4">Career Opportunities</h1>
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
               Discover internships, jobs, contests, and fellowships from top companies worldwide
             </p>
           </div>
@@ -65,7 +65,7 @@ const Opportunities = () => {
           {/* Search and Filters */}
           <div className="mt-8 flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
                 placeholder="Search opportunities..."
                 value={searchTerm}
@@ -109,14 +109,14 @@ const Opportunities = () => {
         {/* Loading State */}
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-            <span className="ml-2 text-gray-600">Loading opportunities...</span>
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <span className="ml-2 text-muted-foreground">Loading opportunities...</span>
           </div>
         ) : (
           <>
             {/* Results Count */}
             <div className="mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">
+              <h2 className="text-xl font-semibold text-foreground">
                 {filteredOpportunities.length} opportunities found
               </h2>
             </div>
@@ -124,11 +124,11 @@ const Opportunities = () => {
             {/* Opportunities Grid */}
             {filteredOpportunities.length === 0 ? (
               <div className="text-center py-12">
-                <div className="text-gray-400 mb-4">
+                <div className="text-muted-foreground mb-4">
                   <Briefcase className="h-16 w-16 mx-auto" />
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No opportunities found</h3>
-                <p className="text-gray-500">Try adjusting your search criteria or check back later for new opportunities.</p>
+                <h3 className="text-lg font-medium text-foreground mb-2">No opportunities found</h3>
+                <p className="text-muted-foreground">Try adjusting your search criteria or check back later for new opportunities.</p>
               </div>
             ) : (
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -165,29 +165,29 @@ const Opportunities = () => {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-gray-600 mb-4 line-clamp-3">{opportunity.description}</p>
+                      <p className="text-muted-foreground mb-4 line-clamp-3">{opportunity.description}</p>
                       
                       <div className="space-y-2 mb-4">
                         {opportunity.company && (
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Building className="h-4 w-4 flex-shrink-0" />
                             <span className="truncate">{opportunity.company}</span>
                           </div>
                         )}
                         {opportunity.location && (
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <MapPin className="h-4 w-4 flex-shrink-0" />
                             <span className="truncate">{opportunity.location}</span>
                           </div>
                         )}
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Calendar className="h-4 w-4 flex-shrink-0" />
                           <span>Deadline: {new Date(opportunity.deadline).toLocaleDateString()}</span>
                         </div>
                       </div>
 
                       <div className="flex items-center justify-between pt-4 border-t">
-                        <span className="text-sm text-gray-500 truncate">
+                        <span className="text-sm text-muted-foreground truncate">
                           {opportunity.domain}
                         </span>
                         <div className="flex gap-2">
