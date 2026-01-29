@@ -188,12 +188,12 @@ const Submit = () => {
   // Redirect if not authenticated
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-muted/30 flex items-center justify-center">
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center">
-            <AlertCircle className="h-12 w-12 text-blue-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Authentication Required</h2>
-            <p className="text-gray-600 mb-4">Please sign in to submit opportunities.</p>
+            <AlertCircle className="h-12 w-12 text-primary mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2 text-foreground">Authentication Required</h2>
+            <p className="text-muted-foreground mb-4">Please sign in to submit opportunities.</p>
             <Button onClick={() => navigate('/auth')} className="w-full">
               Sign In
             </Button>
@@ -204,16 +204,16 @@ const Submit = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-muted/30 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Submit an Opportunity</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-3xl font-bold text-foreground">Submit an Opportunity</h1>
+          <p className="text-muted-foreground mt-2">
             Share internships, contests, events, and scholarships with the community
           </p>
           {(userRole === 'admin' || userRole === 'moderator') && (
             <div className="mt-2">
-              <Badge variant="secondary" className="bg-green-100 text-green-800">
+              <Badge variant="secondary" className="bg-success/10 text-success">
                 Your submissions will be automatically approved
               </Badge>
             </div>
@@ -427,10 +427,10 @@ const Submit = () => {
         <Card className="mt-6">
           <CardContent className="pt-6">
             <div className="flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
+              <AlertCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
               <div>
-                <h3 className="font-medium text-gray-900 mb-1">Submission Guidelines</h3>
-                <ul className="text-sm text-gray-600 space-y-1">
+                <h3 className="font-medium text-foreground mb-1">Submission Guidelines</h3>
+                <ul className="text-sm text-muted-foreground space-y-1">
                   {userRole === 'admin' || userRole === 'moderator' ? (
                     <>
                       <li>• Your submissions are automatically approved due to your role</li>

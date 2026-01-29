@@ -1,10 +1,11 @@
-
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAdmin } from '@/hooks/useAdmin';
 import { useToast } from '@/hooks/use-toast';
+import ModeratorNavigation from '@/components/ModeratorNavigation';
+import LoadingSpinner from '@/components/LoadingSpinner';
 import { 
   Clock, 
   CheckCircle, 
@@ -12,8 +13,7 @@ import {
   Eye,
   Calendar,
   MapPin,
-  Building2,
-  Loader2
+  Building2
 } from 'lucide-react';
 
 const ModeratorPending = () => {
@@ -53,51 +53,46 @@ const ModeratorPending = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading pending content...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner fullScreen size="lg" message="Loading pending content..." />;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-muted/30">
+      <div className="bg-card border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Pending Review</h1>
-              <p className="text-gray-600 mt-2">Review and moderate submitted content</p>
+              <h1 className="text-2xl font-bold text-foreground">Pending Review</h1>
+              <p className="text-muted-foreground mt-1">Review and moderate submitted content</p>
             </div>
             <div className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-amber-500" />
-              <span className="text-sm text-gray-600">{pendingOpportunities.length} pending items</span>
+              <Clock className="h-5 w-5 text-warning" />
+              <span className="text-sm text-muted-foreground">{pendingOpportunities.length} pending items</span>
             </div>
           </div>
         </div>
       </div>
 
+      <ModeratorNavigation />
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-6">
           {pendingOpportunities.map((opportunity) => (
-            <Card key={opportunity.id} className="border-l-4 border-l-amber-400">
+            <Card key={opportunity.id} className="border-l-4 border-l-warning">
               <CardContent className="pt-6">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <h3 className="text-xl font-semibold">{opportunity.title}</h3>
-                      <Badge className="bg-amber-100 text-amber-800">
+                      <h3 className="text-xl font-semibold text-foreground">{opportunity.title}</h3>
+                      <Badge className="bg-warning/10 text-warning border-warning/20">
                         <Clock className="h-3 w-3 mr-1" />
                         Pending
                       </Badge>
                     </div>
                     
-                    <p className="text-gray-600 mb-4 line-clamp-3">{opportunity.description}</p>
+                    <p className="text-muted-foreground mb-4 line-clamp-3">{opportunity.description}</p>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-500 mb-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-muted-foreground mb-4">
                       <div className="flex items-center gap-1">
                         <Building2 className="h-4 w-4" />
                         {opportunity.company || 'Company not specified'}
@@ -115,7 +110,7 @@ const ModeratorPending = () => {
                     <div className="flex gap-2">
                       <Badge variant="outline">{opportunity.type}</Badge>
                       {opportunity.featured && (
-                        <Badge className="bg-blue-100 text-blue-800">Featured</Badge>
+                        <Badge className="bg-primary/10 text-primary border-primary/20">Featured</Badge>
                       )}
                     </div>
                   </div>
@@ -126,13 +121,13 @@ const ModeratorPending = () => {
                       size="sm"
                       onClick={() => window.open(`/opportunities/${opportunity.id}`, '_blank')}
                     >
-                      <Eye className="h-4 w-4" />
+                      <Eye className="h-4 w-4 mr-1" />
                       Preview
                     </Button>
                     <Button
                       size="sm"
                       onClick={() => handleApprove(opportunity.id)}
-                      className="bg-green-600 hover:bg-green-700"
+                      className="bg-success hover:bg-success/90 text-success-foreground"
                     >
                       <CheckCircle className="h-4 w-4 mr-1" />
                       Approve
@@ -154,9 +149,9 @@ const ModeratorPending = () => {
           {pendingOpportunities.length === 0 && (
             <Card>
               <CardContent className="pt-6 text-center">
-                <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">All caught up!</h3>
-                <p className="text-gray-500">No content pending review at this time.</p>
+                <CheckCircle className="h-12 w-12 text-success mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-foreground mb-2">All caught up!</h3>
+                <p className="text-muted-foreground">No content pending review at this time.</p>
               </CardContent>
             </Card>
           )}
