@@ -41,19 +41,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const fetchUserRole = async (userId: string) => {
     try {
       console.log('Fetching role for user:', userId);
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId)
-        .single();
+      
+      // Use the secure database function to get role
+      const { data, error } = await supabase.rpc('get_user_role', {
+        _user_id: userId
+      });
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching user role:', error);
-        setUserRole('user');
+      if (error) {
+        console.error('Error fetching user role via RPC:', error);
+        // Fallback to direct query
+        const { data: roleData, error: roleError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', userId)
+          .maybeSingle();
+        
+        if (roleError) {
+          console.error('Error fetching user role:', roleError);
+          setUserRole('user');
+          return;
+        }
+        
+        const role = roleData?.role || 'user';
+        console.log('User role fetched (fallback):', role);
+        setUserRole(role);
         return;
       }
 
-      const role = data?.role || 'user';
+      const role = data || 'user';
       console.log('User role fetched:', role);
       setUserRole(role);
     } catch (error) {

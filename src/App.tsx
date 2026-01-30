@@ -38,6 +38,7 @@ const AdminNotifications = lazy(() => import('@/pages/AdminNotifications'));
 const AdminSettings = lazy(() => import('@/pages/AdminSettings'));
 const AdminMonetization = lazy(() => import('@/pages/AdminMonetization'));
 const AdminExpired = lazy(() => import('@/pages/AdminExpired'));
+const AdminBulkImport = lazy(() => import('@/pages/AdminBulkImport'));
 const ModeratorDashboard = lazy(() => import('@/pages/ModeratorDashboard'));
 const ModeratorPending = lazy(() => import('@/pages/ModeratorPending'));
 const ModeratorUsers = lazy(() => import('@/pages/ModeratorUsers'));
@@ -205,6 +206,14 @@ const App = () => {
                         element={
                           <ProtectedRoute requireAdmin>
                             <AdminExpired />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/admin/bulk-import"
+                        element={
+                          <ProtectedRoute requireAdmin>
+                            <AdminBulkImport />
                           </ProtectedRoute>
                         }
                       />
