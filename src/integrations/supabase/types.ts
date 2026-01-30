@@ -501,6 +501,8 @@ export type Database = {
         Args: { _details?: Json; _event_type: string; _severity?: string }
         Returns: string
       }
+      make_admin_direct: { Args: { _user_id: string }; Returns: boolean }
+      promote_to_admin: { Args: { _target_user_id: string }; Returns: boolean }
       send_bulk_notification: {
         Args: {
           _message: string

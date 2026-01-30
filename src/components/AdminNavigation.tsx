@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -11,7 +10,8 @@ import {
   DollarSign,
   Mail,
   Archive,
-  Home
+  Home,
+  Upload
 } from 'lucide-react';
 
 const AdminNavigation = () => {
@@ -20,6 +20,7 @@ const AdminNavigation = () => {
   const navItems = [
     { href: '/admin', label: 'Dashboard', icon: Home },
     { href: '/admin/opportunities', label: 'Opportunities', icon: FileText },
+    { href: '/admin/bulk-import', label: 'Bulk Import', icon: Upload },
     { href: '/admin/users', label: 'Users', icon: Users },
     { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
     { href: '/admin/notifications', label: 'Notifications', icon: Bell },
@@ -30,7 +31,7 @@ const AdminNavigation = () => {
   ];
 
   return (
-    <nav className="bg-white border-b border-gray-200">
+    <nav className="bg-card border-b border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex space-x-8 overflow-x-auto">
           {navItems.map((item) => (
@@ -38,10 +39,10 @@ const AdminNavigation = () => {
               key={item.href}
               to={item.href}
               className={cn(
-                'flex items-center gap-2 px-3 py-4 text-sm font-medium border-b-2 whitespace-nowrap',
+                'flex items-center gap-2 px-3 py-4 text-sm font-medium border-b-2 whitespace-nowrap transition-colors',
                 location.pathname === item.href
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
               )}
             >
               <item.icon className="h-4 w-4" />

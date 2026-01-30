@@ -106,24 +106,24 @@ const UserManagement = () => {
   const getRoleIcon = (role: string) => {
     switch (role) {
       case 'admin':
-        return <Shield className="h-4 w-4 text-red-600" />;
+        return <Shield className="h-4 w-4 text-destructive" />;
       case 'moderator':
-        return <Crown className="h-4 w-4 text-blue-600" />;
+        return <Crown className="h-4 w-4 text-primary" />;
       case 'advertiser':
-        return <Megaphone className="h-4 w-4 text-green-600" />;
+        return <Megaphone className="h-4 w-4 text-green-600 dark:text-green-400" />;
       default:
-        return <User className="h-4 w-4 text-gray-600" />;
+        return <User className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
   const getRoleBadge = (role: string) => {
     switch (role) {
       case 'admin':
-        return <Badge className="bg-red-100 text-red-800">Admin</Badge>;
+        return <Badge className="bg-destructive/10 text-destructive border-destructive/20">Admin</Badge>;
       case 'moderator':
-        return <Badge className="bg-blue-100 text-blue-800">Moderator</Badge>;
+        return <Badge className="bg-primary/10 text-primary border-primary/20">Moderator</Badge>;
       case 'advertiser':
-        return <Badge className="bg-green-100 text-green-800">Advertiser</Badge>;
+        return <Badge className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">Advertiser</Badge>;
       default:
         return <Badge variant="secondary">User</Badge>;
     }
@@ -136,12 +136,12 @@ const UserManagement = () => {
 
   if (!isModerator) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-muted/30 flex items-center justify-center">
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center">
-            <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Access Denied</h2>
-            <p className="text-gray-600">Moderator privileges required.</p>
+            <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2 text-foreground">Access Denied</h2>
+            <p className="text-muted-foreground">Moderator privileges required.</p>
           </CardContent>
         </Card>
       </div>
@@ -174,7 +174,7 @@ const UserManagement = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
           <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
               placeholder="Search users..."
               value={searchTerm}
@@ -196,13 +196,13 @@ const UserManagement = () => {
                 return (
                   <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                      <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
                         {getRoleIcon(userRole)}
                       </div>
                       <div>
-                        <h3 className="font-medium">{user.name || 'No name'}</h3>
-                        <p className="text-sm text-gray-600">{user.email}</p>
-                        <p className="text-xs text-gray-400">
+                        <h3 className="font-medium text-foreground">{user.name || 'No name'}</h3>
+                        <p className="text-sm text-muted-foreground">{user.email}</p>
+                        <p className="text-xs text-muted-foreground">
                           Joined {new Date(user.created_at).toLocaleDateString()}
                         </p>
                       </div>
@@ -258,7 +258,7 @@ const UserManagement = () => {
               
               {filteredUsers.length === 0 && (
                 <div className="text-center py-8">
-                  <p className="text-gray-500">No users found</p>
+                  <p className="text-muted-foreground">No users found</p>
                 </div>
               )}
             </div>
