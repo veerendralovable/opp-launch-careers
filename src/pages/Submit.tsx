@@ -25,7 +25,9 @@ const Submit = () => {
     title: '',
     description: '',
     type: '',
+    customType: '',
     domain: '',
+    customDomain: '',
     location: '',
     company: '',
     sourceUrl: '',
@@ -37,8 +39,8 @@ const Submit = () => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const opportunityTypes = ['Internship', 'Contest', 'Event', 'Scholarship'];
-  const domains = ['Tech', 'Design', 'Marketing', 'Finance', 'Engineering', 'Research', 'Other'];
+  const opportunityTypes = ['Internship', 'Job', 'Contest', 'Event', 'Scholarship', 'Fellowship', 'Workshop', 'Other'];
+  const domains = ['Tech', 'Design', 'Marketing', 'Finance', 'Engineering', 'Research', 'Healthcare', 'Education', 'Legal', 'Other'];
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -46,7 +48,13 @@ const Submit = () => {
     if (!formData.title.trim()) newErrors.title = 'Title is required';
     if (!formData.description.trim()) newErrors.description = 'Description is required';
     if (!formData.type) newErrors.type = 'Type is required';
+    if (formData.type === 'Other' && !formData.customType.trim()) {
+      newErrors.customType = 'Please specify the opportunity type';
+    }
     if (!formData.domain) newErrors.domain = 'Domain is required';
+    if (formData.domain === 'Other' && !formData.customDomain.trim()) {
+      newErrors.customDomain = 'Please specify the domain';
+    }
     if (!formData.sourceUrl.trim()) newErrors.sourceUrl = 'Source URL is required';
     if (!formData.deadline) newErrors.deadline = 'Deadline is required';
 
@@ -124,6 +132,10 @@ const Submit = () => {
     setLoading(true);
 
     try {
+      // Determine the final type and domain values
+      const finalType = formData.type === 'Other' ? formData.customType.trim() : formData.type;
+      const finalDomain = formData.domain === 'Other' ? formData.customDomain.trim() : formData.domain;
+      
       // Determine approval status based on user role
       const isApproved = userRole === 'admin' || userRole === 'moderator';
 
@@ -132,8 +144,8 @@ const Submit = () => {
         .insert({
           title: formData.title.trim(),
           description: formData.description.trim(),
-          type: formData.type as 'Internship' | 'Contest' | 'Event' | 'Scholarship',
-          domain: formData.domain,
+          type: finalType,
+          domain: finalDomain,
           location: formData.location.trim() || null,
           company: formData.company.trim() || null,
           source_url: formData.sourceUrl.trim(),
@@ -161,7 +173,9 @@ const Submit = () => {
         title: '',
         description: '',
         type: '',
+        customType: '',
         domain: '',
+        customDomain: '',
         location: '',
         company: '',
         sourceUrl: '',
@@ -209,11 +223,11 @@ const Submit = () => {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-foreground">Submit an Opportunity</h1>
           <p className="text-muted-foreground mt-2">
-            Share internships, contests, events, and scholarships with the community
+            Share internships, jobs, contests, events, and scholarships with the community
           </p>
           {(userRole === 'admin' || userRole === 'moderator') && (
             <div className="mt-2">
-              <Badge variant="secondary" className="bg-success/10 text-success">
+              <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
                 Your submissions will be automatically approved
               </Badge>
             </div>
@@ -234,17 +248,17 @@ const Submit = () => {
                   value={formData.title}
                   onChange={(e) => handleInputChange('title', e.target.value)}
                   placeholder="e.g., Software Engineering Internship at Google"
-                  className={errors.title ? 'border-red-500' : ''}
+                  className={errors.title ? 'border-destructive' : ''}
                 />
-                {errors.title && <p className="text-sm text-red-500 mt-1">{errors.title}</p>}
+                {errors.title && <p className="text-sm text-destructive mt-1">{errors.title}</p>}
               </div>
 
               {/* Type and Domain */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+                <div className="space-y-2">
                   <Label htmlFor="type">Type *</Label>
                   <Select value={formData.type} onValueChange={(value) => handleInputChange('type', value)}>
-                    <SelectTrigger className={errors.type ? 'border-red-500' : ''}>
+                    <SelectTrigger className={errors.type ? 'border-destructive' : ''}>
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -253,13 +267,25 @@ const Submit = () => {
                       ))}
                     </SelectContent>
                   </Select>
-                  {errors.type && <p className="text-sm text-red-500 mt-1">{errors.type}</p>}
+                  {errors.type && <p className="text-sm text-destructive mt-1">{errors.type}</p>}
+                  
+                  {formData.type === 'Other' && (
+                    <div className="mt-2">
+                      <Input
+                        value={formData.customType}
+                        onChange={(e) => handleInputChange('customType', e.target.value)}
+                        placeholder="Specify custom type..."
+                        className={errors.customType ? 'border-destructive' : ''}
+                      />
+                      {errors.customType && <p className="text-sm text-destructive mt-1">{errors.customType}</p>}
+                    </div>
+                  )}
                 </div>
 
-                <div>
+                <div className="space-y-2">
                   <Label htmlFor="domain">Domain *</Label>
                   <Select value={formData.domain} onValueChange={(value) => handleInputChange('domain', value)}>
-                    <SelectTrigger className={errors.domain ? 'border-red-500' : ''}>
+                    <SelectTrigger className={errors.domain ? 'border-destructive' : ''}>
                       <SelectValue placeholder="Select domain" />
                     </SelectTrigger>
                     <SelectContent>
@@ -268,7 +294,19 @@ const Submit = () => {
                       ))}
                     </SelectContent>
                   </Select>
-                  {errors.domain && <p className="text-sm text-red-500 mt-1">{errors.domain}</p>}
+                  {errors.domain && <p className="text-sm text-destructive mt-1">{errors.domain}</p>}
+                  
+                  {formData.domain === 'Other' && (
+                    <div className="mt-2">
+                      <Input
+                        value={formData.customDomain}
+                        onChange={(e) => handleInputChange('customDomain', e.target.value)}
+                        placeholder="Specify custom domain..."
+                        className={errors.customDomain ? 'border-destructive' : ''}
+                      />
+                      {errors.customDomain && <p className="text-sm text-destructive mt-1">{errors.customDomain}</p>}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -304,9 +342,9 @@ const Submit = () => {
                   onChange={(e) => handleInputChange('description', e.target.value)}
                   placeholder="Provide a detailed description of the opportunity, requirements, and benefits..."
                   rows={6}
-                  className={errors.description ? 'border-red-500' : ''}
+                  className={errors.description ? 'border-destructive' : ''}
                 />
-                {errors.description && <p className="text-sm text-red-500 mt-1">{errors.description}</p>}
+                {errors.description && <p className="text-sm text-destructive mt-1">{errors.description}</p>}
               </div>
 
               {/* Tags */}
@@ -338,7 +376,7 @@ const Submit = () => {
                         <button
                           type="button"
                           onClick={() => removeTag(tag)}
-                          className="hover:text-red-500"
+                          className="hover:text-destructive"
                         >
                           <X className="h-3 w-3" />
                         </button>
@@ -346,7 +384,7 @@ const Submit = () => {
                     ))}
                   </div>
                 )}
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   Add up to 10 tags. Press Enter or click + to add.
                 </p>
               </div>
@@ -362,7 +400,7 @@ const Submit = () => {
                         className={cn(
                           "w-full justify-start text-left font-normal",
                           !formData.deadline && "text-muted-foreground",
-                          errors.deadline && "border-red-500"
+                          errors.deadline && "border-destructive"
                         )}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
@@ -379,7 +417,7 @@ const Submit = () => {
                       />
                     </PopoverContent>
                   </Popover>
-                  {errors.deadline && <p className="text-sm text-red-500 mt-1">{errors.deadline}</p>}
+                  {errors.deadline && <p className="text-sm text-destructive mt-1">{errors.deadline}</p>}
                 </div>
 
                 <div>
@@ -390,9 +428,9 @@ const Submit = () => {
                     value={formData.sourceUrl}
                     onChange={(e) => handleInputChange('sourceUrl', e.target.value)}
                     placeholder="https://example.com/apply"
-                    className={errors.sourceUrl ? 'border-red-500' : ''}
+                    className={errors.sourceUrl ? 'border-destructive' : ''}
                   />
-                  {errors.sourceUrl && <p className="text-sm text-red-500 mt-1">{errors.sourceUrl}</p>}
+                  {errors.sourceUrl && <p className="text-sm text-destructive mt-1">{errors.sourceUrl}</p>}
                 </div>
               </div>
 
@@ -408,7 +446,7 @@ const Submit = () => {
                 <Button type="submit" disabled={loading}>
                   {loading ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground mr-2"></div>
                       Submitting...
                     </>
                   ) : (

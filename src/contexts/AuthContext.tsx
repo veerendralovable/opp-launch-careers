@@ -209,40 +209,39 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (data.user) {
         console.log('User created:', data.user.id, 'with requested role:', role);
         
+        // The handle_new_user trigger will automatically:
+        // 1. Create a profile entry
+        // 2. Assign the 'user' role
+        // So we don't need to manually assign roles here for regular users
+        
         if (role === 'admin') {
-          console.log('Admin role assignment will be handled separately');
-        } else {
-          setTimeout(async () => {
-            const roleAssigned = await assignUserRole(data.user!.id, role as 'user' | 'admin' | 'moderator');
-            if (roleAssigned) {
-              console.log('Role assignment completed successfully');
-              await fetchUserRole(data.user!.id);
-            }
-          }, 2000);
+          console.log('Admin role assignment must be handled via database directly');
         }
 
-        // Log security event
-        await supabase.rpc('log_security_event', {
-          _event_type: 'user_registration',
-          _details: { 
-            email: sanitizeEmail(email), 
-            name: sanitizeText(name), 
-            role,
-            timestamp: new Date().toISOString()
-          },
-          _severity: 'info'
-        });
+        // Don't try to log security event here as user may not be fully authenticated yet
+        // The trigger function will handle profile creation
 
         toast({
           title: "Account created!",
-          description: `${role.charAt(0).toUpperCase() + role.slice(1)} account created successfully. Please check your email to verify your account.`,
+          description: "Please check your email to verify your account before signing in.",
         });
       }
 
       return { error: null };
     } catch (error: any) {
       console.error('Signup error:', error);
-      return { error };
+      
+      // Provide more user-friendly error messages
+      let errorMessage = error.message;
+      if (error.message?.includes('User already registered')) {
+        errorMessage = 'An account with this email already exists. Please sign in instead.';
+      } else if (error.message?.includes('Invalid email')) {
+        errorMessage = 'Please enter a valid email address.';
+      } else if (error.message?.includes('Password')) {
+        errorMessage = error.message;
+      }
+      
+      return { error: { ...error, message: errorMessage } };
     } finally {
       setLoading(false);
     }
