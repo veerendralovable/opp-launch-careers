@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -16,12 +16,12 @@ import {
   Clock,
   DollarSign,
   Users,
-  Mail,
-  Phone,
   CheckCircle,
   ArrowLeft,
   Share2,
-  Eye
+  Eye,
+  Copy,
+  Check
 } from 'lucide-react';
 
 const OpportunityDetail = () => {
@@ -33,18 +33,12 @@ const OpportunityDetail = () => {
   const [loading, setLoading] = useState(true);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [bookmarkLoading, setBookmarkLoading] = useState(false);
+  const [viewCount, setViewCount] = useState(0);
+  const [copied, setCopied] = useState(false);
 
-  useEffect(() => {
-    if (id) {
-      fetchOpportunity();
-      if (user) {
-        checkBookmarkStatus();
-        trackView();
-      }
-    }
-  }, [id, user]);
-
-  const fetchOpportunity = async () => {
+  const fetchOpportunity = useCallback(async () => {
+    if (!id) return;
+    
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -52,18 +46,22 @@ const OpportunityDetail = () => {
         .select('*')
         .eq('id', id)
         .eq('is_approved', true)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
-      setOpportunity(data);
-
-      // Increment view count
-      if (data) {
-        await supabase
-          .from('opportunities')
-          .update({ view_count: (data.view_count || 0) + 1 })
-          .eq('id', id);
+      
+      if (!data) {
+        toast({
+          title: "Not Found",
+          description: "This opportunity doesn't exist or hasn't been approved yet.",
+          variant: "destructive"
+        });
+        navigate('/opportunities');
+        return;
       }
+      
+      setOpportunity(data);
+      setViewCount(data.view_count || 0);
 
     } catch (error: any) {
       console.error('Error fetching opportunity:', error);
@@ -76,9 +74,21 @@ const OpportunityDetail = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, navigate, toast]);
 
-  const checkBookmarkStatus = async () => {
+  const incrementViewCount = useCallback(async () => {
+    if (!id) return;
+    
+    try {
+      // Use the RPC function to increment view count (works for both authenticated and anonymous users)
+      await supabase.rpc('increment_view_count', { _opportunity_id: id });
+      setViewCount(prev => prev + 1);
+    } catch (error) {
+      console.error('Error incrementing view count:', error);
+    }
+  }, [id]);
+
+  const checkBookmarkStatus = useCallback(async () => {
     if (!user || !id) return;
 
     try {
@@ -93,13 +103,12 @@ const OpportunityDetail = () => {
     } catch (error) {
       console.error('Error checking bookmark status:', error);
     }
-  };
+  }, [user, id]);
 
-  const trackView = async () => {
+  const trackView = useCallback(async () => {
     if (!user || !id) return;
 
     try {
-      // Track view in analytics
       await supabase.from('analytics').insert({
         user_id: user.id,
         event_type: 'opportunity_view',
@@ -109,7 +118,44 @@ const OpportunityDetail = () => {
     } catch (error) {
       console.error('Error tracking view:', error);
     }
-  };
+  }, [user, id]);
+
+  useEffect(() => {
+    fetchOpportunity();
+    incrementViewCount();
+    
+    if (user) {
+      checkBookmarkStatus();
+      trackView();
+    }
+  }, [fetchOpportunity, incrementViewCount, checkBookmarkStatus, trackView, user]);
+
+  // Set up real-time subscription for view count
+  useEffect(() => {
+    if (!id) return;
+
+    const channel = supabase
+      .channel(`opportunity-views-${id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'opportunities',
+          filter: `id=eq.${id}`
+        },
+        (payload) => {
+          if (payload.new && typeof payload.new.view_count === 'number') {
+            setViewCount(payload.new.view_count);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [id]);
 
   const toggleBookmark = async () => {
     if (!user) {
@@ -161,33 +207,74 @@ const OpportunityDetail = () => {
     }
   };
 
+  const generateShareContent = () => {
+    if (!opportunity) return '';
+    
+    const platformUrl = window.location.href;
+    const deadline = opportunity.deadline 
+      ? new Date(opportunity.deadline).toLocaleDateString('en-US', { 
+          year: 'numeric', 
+          month: 'short', 
+          day: 'numeric' 
+        })
+      : 'Not specified';
+    
+    const lines = [
+      `📢 ${opportunity.type}: ${opportunity.title}`,
+      '',
+      opportunity.company ? `🏢 ${opportunity.company}` : null,
+      opportunity.location ? `📍 ${opportunity.location}` : null,
+      opportunity.domain ? `🎯 Domain: ${opportunity.domain}` : null,
+      `📅 Deadline: ${deadline}`,
+      '',
+      '🔗 View & Apply:',
+      platformUrl,
+      '',
+      '— Shared via OpportunityHub'
+    ].filter(Boolean);
+    
+    return lines.join('\n');
+  };
+
   const shareOpportunity = async () => {
+    const shareContent = generateShareContent();
+    
     if (navigator.share) {
       try {
         await navigator.share({
-          title: opportunity?.title,
-          text: opportunity?.description,
+          title: `${opportunity?.type}: ${opportunity?.title}`,
+          text: shareContent,
           url: window.location.href,
         });
       } catch (error) {
-        // User cancelled sharing
+        // User cancelled or error - fall back to clipboard
+        copyToClipboard(shareContent);
       }
     } else {
-      navigator.clipboard.writeText(window.location.href);
-      toast({
-        title: "Link copied!",
-        description: "Opportunity link copied to clipboard"
-      });
+      copyToClipboard(shareContent);
     }
   };
 
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    toast({
+      title: "Copied to clipboard!",
+      description: "Opportunity details copied. Share it anywhere!"
+    });
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   const getTypeColor = (type: string) => {
-    switch (type) {
-      case "Internship": return "bg-blue-100 text-blue-800";
-      case "Contest": return "bg-green-100 text-green-800";
-      case "Event": return "bg-purple-100 text-purple-800";
-      case "Scholarship": return "bg-amber-100 text-amber-800";
-      default: return "bg-gray-100 text-gray-800";
+    switch (type?.toLowerCase()) {
+      case "internship": return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
+      case "job": return "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200";
+      case "contest": return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
+      case "event": return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200";
+      case "scholarship": return "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200";
+      case "fellowship": return "bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200";
+      case "workshop": return "bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200";
+      default: return "bg-muted text-muted-foreground";
     }
   };
 
@@ -236,8 +323,12 @@ const OpportunityDetail = () => {
               size="sm"
               onClick={shareOpportunity}
             >
-              <Share2 className="h-4 w-4 mr-2" />
-              Share
+              {copied ? (
+                <Check className="h-4 w-4 mr-2 text-green-600" />
+              ) : (
+                <Share2 className="h-4 w-4 mr-2" />
+              )}
+              {copied ? 'Copied!' : 'Share'}
             </Button>
             
             <Button
@@ -264,13 +355,13 @@ const OpportunityDetail = () => {
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-3">
+                    <div className="flex items-center gap-3 mb-3 flex-wrap">
                       <Badge className={getTypeColor(opportunity.type)}>
                         {opportunity.type}
                       </Badge>
                       <Badge variant="outline">{opportunity.domain}</Badge>
                       {opportunity.featured && (
-                        <Badge className="bg-yellow-100 text-yellow-800">
+                        <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
                           ⭐ Featured
                         </Badge>
                       )}
@@ -376,7 +467,11 @@ const OpportunityDetail = () => {
                     <div>
                       <p className="text-sm font-medium">Deadline</p>
                       <p className={`text-sm ${isExpired ? 'text-destructive' : 'text-muted-foreground'}`}>
-                        {new Date(opportunity.deadline).toLocaleDateString()}
+                        {new Date(opportunity.deadline).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
                       </p>
                     </div>
                   </div>
@@ -398,7 +493,7 @@ const OpportunityDetail = () => {
                   <Eye className="h-5 w-5 text-muted-foreground" />
                   <div>
                     <p className="text-sm font-medium">Views</p>
-                    <p className="text-sm text-muted-foreground">{opportunity.view_count || 0}</p>
+                    <p className="text-sm text-muted-foreground">{viewCount.toLocaleString()}</p>
                   </div>
                 </div>
               </CardContent>
@@ -420,6 +515,23 @@ const OpportunityDetail = () => {
                 <p className="text-xs text-muted-foreground text-center mt-2">
                   You'll be redirected to the original posting
                 </p>
+
+                {/* Quick Share */}
+                <div className="mt-4 pt-4 border-t">
+                  <p className="text-sm font-medium mb-2 text-center">Quick Share</p>
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => copyToClipboard(generateShareContent())}
+                  >
+                    {copied ? (
+                      <Check className="h-4 w-4 mr-2 text-green-600" />
+                    ) : (
+                      <Copy className="h-4 w-4 mr-2" />
+                    )}
+                    {copied ? 'Copied!' : 'Copy Details'}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>

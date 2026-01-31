@@ -496,6 +496,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_view_count: {
+        Args: { _opportunity_id: string }
+        Returns: undefined
+      }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       log_security_event: {
         Args: { _details?: Json; _event_type: string; _severity?: string }
