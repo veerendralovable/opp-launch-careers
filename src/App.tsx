@@ -11,6 +11,7 @@ import UnifiedNavigation from '@/components/UnifiedNavigation';
 import Footer from '@/components/Footer';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import CookieConsent from '@/components/CookieConsent';
 
 // Lazy load components
 const Home = lazy(() => import('@/pages/Home'));
@@ -266,6 +267,7 @@ const App = () => {
                   </Suspense>
                 </main>
                 <Footer />
+                <CookieConsent />
               </div>
             </AuthProvider>
           </BrowserRouter>

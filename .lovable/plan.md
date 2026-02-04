@@ -559,4 +559,3 @@ Integration options:
 - 50+ opportunities added weekly
 - 100+ premium subscribers
 - Positive ad revenue
-

@@ -1,0 +1,16 @@
+# ads.txt file for OpportunityHub
+# This file authorizes ad networks to sell inventory on this domain
+# Replace PUBLISHER_ID with your actual Google AdSense publisher ID once approved
+
+# Google AdSense - Replace pub-XXXXXXXXXXXXXXXX with your publisher ID
+# google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0
+
+# Instructions:
+# 1. Apply for Google AdSense at https://www.google.com/adsense/
+# 2. Once approved, you'll receive a publisher ID (format: pub-XXXXXXXXXXXXXXXX)
+# 3. Uncomment the google.com line above and replace XXXXXXXXXXXXXXXX with your ID
+# 4. You can add additional ad networks below as needed
+
+# Example for additional networks:
+# google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0
+# google.com, pub-XXXXXXXXXXXXXXXX, RESELLER, f08c47fec0942fa0
