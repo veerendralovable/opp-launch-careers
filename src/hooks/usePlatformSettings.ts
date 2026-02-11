@@ -1,18 +1,14 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Database } from '@/integrations/supabase/types';
-
-type PlatformSetting = Database['public']['Tables']['platform_settings']['Row'];
 
 export const usePlatformSettings = () => {
-  const [settings, setSettings] = useState<Record<string, any>>({});
-  const [loading, setLoading] = useState(false);
+  const [settings, setSettings] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const fetchSettings = async () => {
-    setLoading(true);
+  const fetchSettings = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('platform_settings')
@@ -20,10 +16,12 @@ export const usePlatformSettings = () => {
 
       if (error) throw error;
       
-      const settingsMap = data.reduce((acc, setting) => {
-        acc[setting.key] = setting.value;
+      const settingsMap = (data || []).reduce((acc, setting) => {
+        // value is stored as JSON string, parse it
+        const val = setting.value;
+        acc[setting.key] = typeof val === 'string' ? val : JSON.stringify(val);
         return acc;
-      }, {} as Record<string, any>);
+      }, {} as Record<string, string>);
       
       setSettings(settingsMap);
     } catch (error) {
@@ -31,15 +29,15 @@ export const usePlatformSettings = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const updateSetting = async (key: string, value: any) => {
+  const updateSetting = async (key: string, value: string) => {
     try {
       const { error } = await supabase
         .from('platform_settings')
         .upsert({
           key,
-          value,
+          value: value as any,
           updated_at: new Date().toISOString()
         });
 
@@ -60,14 +58,21 @@ export const usePlatformSettings = () => {
     }
   };
 
+  const getSetting = useCallback((key: string, fallback: string = '') => {
+    const val = settings[key];
+    if (!val) return fallback;
+    return val;
+  }, [settings]);
+
   useEffect(() => {
     fetchSettings();
-  }, []);
+  }, [fetchSettings]);
 
   return {
     settings,
     loading,
     updateSetting,
+    getSetting,
     refetch: fetchSettings
   };
 };

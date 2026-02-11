@@ -54,6 +54,7 @@ const UnifiedNavigation = () => {
     { path: '/', label: 'Home', icon: Home },
     { path: '/opportunities', label: 'Jobs', icon: Briefcase },
     { path: '/scholarships', label: 'Scholarships', icon: GraduationCap },
+    { path: '/blog', label: 'Blog', icon: BookOpen },
     { path: '/search', label: 'Search', icon: Search },
   ];
 

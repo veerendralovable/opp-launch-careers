@@ -44,6 +44,8 @@ const ModeratorDashboard = lazy(() => import('@/pages/ModeratorDashboard'));
 const ModeratorPending = lazy(() => import('@/pages/ModeratorPending'));
 const ModeratorUsers = lazy(() => import('@/pages/ModeratorUsers'));
 const ModeratorApprovedContent = lazy(() => import('@/pages/ModeratorApprovedContent'));
+const Blog = lazy(() => import('@/pages/Blog'));
+const BlogArticle = lazy(() => import('@/pages/BlogArticle'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 
 const queryClient = new QueryClient({
@@ -86,6 +88,8 @@ const App = () => {
                       <Route path="/privacy" element={<Privacy />} />
                       <Route path="/terms" element={<Terms />} />
                       <Route path="/cookies" element={<Cookies />} />
+                      <Route path="/blog" element={<Blog />} />
+                      <Route path="/blog/:slug" element={<BlogArticle />} />
                       
                       {/* Protected Routes */}
                       <Route

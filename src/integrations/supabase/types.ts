@@ -94,6 +94,54 @@ export type Database = {
           },
         ]
       }
+      blog_articles: {
+        Row: {
+          author: string
+          category: string
+          content: string
+          created_at: string | null
+          excerpt: string
+          featured_image: string | null
+          id: string
+          is_published: boolean | null
+          slug: string
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+          view_count: number | null
+        }
+        Insert: {
+          author?: string
+          category: string
+          content: string
+          created_at?: string | null
+          excerpt: string
+          featured_image?: string | null
+          id?: string
+          is_published?: boolean | null
+          slug: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+          view_count?: number | null
+        }
+        Update: {
+          author?: string
+          category?: string
+          content?: string
+          created_at?: string | null
+          excerpt?: string
+          featured_image?: string | null
+          id?: string
+          is_published?: boolean | null
+          slug?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+          view_count?: number | null
+        }
+        Relationships: []
+      }
       bookmarks: {
         Row: {
           created_at: string
@@ -206,17 +254,21 @@ export type Database = {
           employment_type: string | null
           experience_required: string | null
           featured: boolean | null
+          hiring_timeline: string | null
           id: string
+          industry_growth_rating: number | null
           is_approved: boolean | null
           is_expired: boolean | null
           is_featured: boolean | null
           location: string | null
+          meta_description: string | null
           priority: number | null
           remote_work_allowed: boolean | null
           requirements: string[] | null
           salary_currency: string | null
           salary_max: number | null
           salary_min: number | null
+          skill_difficulty: string | null
           source_url: string | null
           submitted_by: string | null
           tags: string[] | null
@@ -238,17 +290,21 @@ export type Database = {
           employment_type?: string | null
           experience_required?: string | null
           featured?: boolean | null
+          hiring_timeline?: string | null
           id?: string
+          industry_growth_rating?: number | null
           is_approved?: boolean | null
           is_expired?: boolean | null
           is_featured?: boolean | null
           location?: string | null
+          meta_description?: string | null
           priority?: number | null
           remote_work_allowed?: boolean | null
           requirements?: string[] | null
           salary_currency?: string | null
           salary_max?: number | null
           salary_min?: number | null
+          skill_difficulty?: string | null
           source_url?: string | null
           submitted_by?: string | null
           tags?: string[] | null
@@ -270,17 +326,21 @@ export type Database = {
           employment_type?: string | null
           experience_required?: string | null
           featured?: boolean | null
+          hiring_timeline?: string | null
           id?: string
+          industry_growth_rating?: number | null
           is_approved?: boolean | null
           is_expired?: boolean | null
           is_featured?: boolean | null
           location?: string | null
+          meta_description?: string | null
           priority?: number | null
           remote_work_allowed?: boolean | null
           requirements?: string[] | null
           salary_currency?: string | null
           salary_max?: number | null
           salary_min?: number | null
+          skill_difficulty?: string | null
           source_url?: string | null
           submitted_by?: string | null
           tags?: string[] | null
