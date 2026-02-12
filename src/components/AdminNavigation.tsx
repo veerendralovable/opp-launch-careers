@@ -11,7 +11,9 @@ import {
   Mail,
   Archive,
   Home,
-  Upload
+  Upload,
+  BookOpen,
+  List
 } from 'lucide-react';
 
 const AdminNavigation = () => {
@@ -19,12 +21,14 @@ const AdminNavigation = () => {
 
   const navItems = [
     { href: '/admin', label: 'Dashboard', icon: Home },
-    { href: '/admin/opportunities', label: 'Opportunities', icon: FileText },
+    { href: '/admin/opportunities', label: 'Pending', icon: FileText },
+    { href: '/admin/all-opportunities', label: 'All Opportunities', icon: List },
     { href: '/admin/bulk-import', label: 'Bulk Import', icon: Upload },
+    { href: '/admin/blog', label: 'Blog', icon: BookOpen },
     { href: '/admin/users', label: 'Users', icon: Users },
     { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
     { href: '/admin/notifications', label: 'Notifications', icon: Bell },
-    { href: '/admin/email', label: 'Email Campaigns', icon: Mail },
+    { href: '/admin/email', label: 'Email', icon: Mail },
     { href: '/admin/expired', label: 'Expired', icon: Archive },
     { href: '/admin/monetization', label: 'Monetization', icon: DollarSign },
     { href: '/admin/settings', label: 'Settings', icon: Settings },

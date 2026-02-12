@@ -5,6 +5,7 @@ import { Toaster as Sonner } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider } from '@/contexts/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import UnifiedNavigation from '@/components/UnifiedNavigation';
@@ -40,6 +41,8 @@ const AdminSettings = lazy(() => import('@/pages/AdminSettings'));
 const AdminMonetization = lazy(() => import('@/pages/AdminMonetization'));
 const AdminExpired = lazy(() => import('@/pages/AdminExpired'));
 const AdminBulkImport = lazy(() => import('@/pages/AdminBulkImport'));
+const AdminBlog = lazy(() => import('@/pages/AdminBlog'));
+const AdminAllOpportunities = lazy(() => import('@/pages/AdminAllOpportunities'));
 const ModeratorDashboard = lazy(() => import('@/pages/ModeratorDashboard'));
 const ModeratorPending = lazy(() => import('@/pages/ModeratorPending'));
 const ModeratorUsers = lazy(() => import('@/pages/ModeratorUsers'));
@@ -63,6 +66,7 @@ const queryClient = new QueryClient({
 const App = () => {
   return (
     <ErrorBoundary>
+      <HelmetProvider>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <Toaster />
@@ -222,6 +226,22 @@ const App = () => {
                           </ProtectedRoute>
                         }
                       />
+                      <Route
+                        path="/admin/blog"
+                        element={
+                          <ProtectedRoute requireAdmin>
+                            <AdminBlog />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/admin/all-opportunities"
+                        element={
+                          <ProtectedRoute requireAdmin>
+                            <AdminAllOpportunities />
+                          </ProtectedRoute>
+                        }
+                      />
 
                       {/* Moderator Routes */}
                       <Route
@@ -277,6 +297,7 @@ const App = () => {
           </BrowserRouter>
         </TooltipProvider>
       </QueryClientProvider>
+      </HelmetProvider>
     </ErrorBoundary>
   );
 };
