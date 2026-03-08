@@ -54,6 +54,8 @@ const Guides = lazy(() => import('@/pages/guides/Guides'));
 const InterviewGuide = lazy(() => import('@/pages/guides/InterviewGuide'));
 const ResumeGuide = lazy(() => import('@/pages/guides/ResumeGuide'));
 const ScholarshipGuide = lazy(() => import('@/pages/guides/ScholarshipGuide'));
+const Notifications = lazy(() => import('@/pages/Notifications'));
+const ResumeBuilder = lazy(() => import('@/pages/ResumeBuilder'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 
 const queryClient = new QueryClient({
@@ -135,6 +137,22 @@ const App = () => {
                         element={
                           <ProtectedRoute>
                             <Submit />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/notifications"
+                        element={
+                          <ProtectedRoute>
+                            <Notifications />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/resume-builder"
+                        element={
+                          <ProtectedRoute>
+                            <ResumeBuilder />
                           </ProtectedRoute>
                         }
                       />

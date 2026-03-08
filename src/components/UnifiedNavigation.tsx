@@ -74,7 +74,7 @@ const UnifiedNavigation = () => {
   ];
 
   return (
-    <nav className="bg-white shadow-sm border-b sticky top-0 z-50">
+    <nav className="bg-background shadow-sm border-b sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
@@ -97,8 +97,8 @@ const UnifiedNavigation = () => {
                 to={item.path}
                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                   isActive(item.path)
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                 }`}
               >
                 <item.icon className="h-4 w-4 inline mr-1" />
@@ -231,7 +231,7 @@ const UnifiedNavigation = () => {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t bg-white">
+          <div className="md:hidden border-t bg-background">
             <div className="px-2 pt-2 pb-3 space-y-1">
               {mainNavItems.map((item) => (
                 <Link
@@ -239,8 +239,8 @@ const UnifiedNavigation = () => {
                   to={item.path}
                   className={`block px-3 py-2 rounded-md text-base font-medium ${
                     isActive(item.path)
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                   }`}
                   onClick={() => setMobileMenuOpen(false)}
                 >
@@ -264,12 +264,12 @@ const UnifiedNavigation = () => {
               {user && userRole === 'admin' && (
                 <>
                   <div className="border-t pt-2 mt-2">
-                    <div className="px-3 py-1 text-xs font-semibold text-gray-500 uppercase">Admin</div>
+                    <div className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase">Admin</div>
                     {adminNavItems.map((item) => (
                       <Link
                         key={item.path}
                         to={item.path}
-                        className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                        className="block px-3 py-2 rounded-md text-base font-medium text-muted-foreground hover:text-foreground hover:bg-muted"
                         onClick={() => setMobileMenuOpen(false)}
                       >
                         <item.icon className="h-4 w-4 inline mr-2" />
@@ -283,12 +283,12 @@ const UnifiedNavigation = () => {
               {user && userRole === 'moderator' && (
                 <>
                   <div className="border-t pt-2 mt-2">
-                    <div className="px-3 py-1 text-xs font-semibold text-gray-500 uppercase">Moderator</div>
+                    <div className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase">Moderator</div>
                     {moderatorNavItems.map((item) => (
                       <Link
                         key={item.path}
                         to={item.path}
-                        className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                        className="block px-3 py-2 rounded-md text-base font-medium text-muted-foreground hover:text-foreground hover:bg-muted"
                         onClick={() => setMobileMenuOpen(false)}
                       >
                         <item.icon className="h-4 w-4 inline mr-2" />

@@ -23,6 +23,8 @@ import {
   Copy,
   Check
 } from 'lucide-react';
+import ApplyModal from '@/components/ApplyModal';
+import SEO from '@/components/SEO';
 
 const OpportunityDetail = () => {
   const { id } = useParams();
@@ -501,20 +503,24 @@ const OpportunityDetail = () => {
 
             {/* Action Button */}
             <Card>
-              <CardContent className="pt-6">
-                <Button 
-                  className="w-full" 
-                  size="lg"
-                  onClick={() => window.open(opportunity.source_url, '_blank')}
+              <CardContent className="pt-6 space-y-3">
+                <ApplyModal
+                  opportunityId={opportunity.id}
+                  opportunityTitle={opportunity.title}
                   disabled={isExpired}
-                >
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  {isExpired ? 'Opportunity Expired' : 'Apply Now'}
-                </Button>
-                
-                <p className="text-xs text-muted-foreground text-center mt-2">
-                  You'll be redirected to the original posting
-                </p>
+                />
+
+                {opportunity.source_url && (
+                  <Button 
+                    variant="outline"
+                    className="w-full" 
+                    size="lg"
+                    onClick={() => window.open(opportunity.source_url, '_blank')}
+                  >
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    View Original Posting
+                  </Button>
+                )}
 
                 {/* Quick Share */}
                 <div className="mt-4 pt-4 border-t">

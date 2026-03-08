@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Mail, Phone, MapPin, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { usePlatformSettings } from '@/hooks/usePlatformSettings';
+import { supabase } from '@/integrations/supabase/client';
 import SEO from '@/components/SEO';
 
 const Contact = () => {
@@ -24,12 +25,27 @@ const Contact = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.name.trim() || !formData.email.trim() || !formData.subject.trim() || !formData.message.trim()) {
+      toast({ title: "Error", description: "Please fill all required fields.", variant: "destructive" });
+      return;
+    }
     setLoading(true);
-    setTimeout(() => {
+    try {
+      const { error } = await supabase.from('contact_messages').insert({
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        subject: formData.subject.trim(),
+        category: formData.category || 'general',
+        message: formData.message.trim(),
+      });
+      if (error) throw error;
       toast({ title: "Message sent!", description: "We'll get back to you within 24 hours." });
       setFormData({ name: '', email: '', subject: '', category: '', message: '' });
+    } catch (error: any) {
+      toast({ title: "Error", description: "Failed to send message. Please try again.", variant: "destructive" });
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   const handleChange = (field: string, value: string) => {

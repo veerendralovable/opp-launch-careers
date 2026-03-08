@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import SEO from '@/components/SEO';
 import { Link } from 'react-router-dom';
 import { useOpportunities } from '@/hooks/useOpportunities';
 import { useBookmarks } from '@/hooks/useBookmarks';
@@ -38,7 +39,9 @@ const Scholarships = () => {
   const scholarships = opportunities.filter(opp => opp.type === 'Scholarship');
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <>
+    <SEO title="Scholarships - OpportunityHub" description="Find scholarships and funding opportunities for your education and research." />
+    <div className="min-h-screen bg-muted/30">
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center">
@@ -195,6 +198,7 @@ const Scholarships = () => {
         )}
       </div>
     </div>
+    </>
   );
 };
 
