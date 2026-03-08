@@ -21,6 +21,9 @@ const EnhancedAuthPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [activeTab, setActiveTab] = useState('login');
+  const [forgotPassword, setForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [signupSuccess, setSignupSuccess] = useState(false);
   const { signIn, signUp } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
