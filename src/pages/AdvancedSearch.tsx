@@ -75,11 +75,11 @@ const AdvancedSearch = () => {
   const locationOptions = ['India', 'USA', 'UK', 'Canada', 'Remote', 'Global'];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b">
+    <div className="min-h-screen bg-muted/30">
+      <div className="bg-card border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Advanced Search</h1>
-          <p className="text-gray-600 mb-6">Find opportunities with powerful search and filtering</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Advanced Search</h1>
+          <p className="text-muted-foreground mb-6">Find opportunities with powerful search and filtering</p>
 
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row gap-4">
