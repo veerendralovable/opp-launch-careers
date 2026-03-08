@@ -34,6 +34,7 @@ const Footer = () => {
     { name: 'Opportunities', path: '/opportunities' },
     { name: 'Scholarships', path: '/scholarships' },
     { name: 'Career Insights', path: '/blog' },
+    { name: 'Career Guides', path: '/guides' },
     { name: 'Advanced Search', path: '/search' },
     { name: 'About Us', path: '/about' },
     { name: 'Contact', path: '/contact' },
