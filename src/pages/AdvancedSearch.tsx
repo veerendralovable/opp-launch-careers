@@ -154,7 +154,7 @@ const AdvancedSearch = () => {
                         <select
                           value={locationFilter}
                           onChange={(e) => setLocationFilter(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white"
+                          className="w-full px-3 py-2 border border-border rounded-md bg-card text-foreground"
                         >
                           <option value="">All Locations</option>
                           {locationOptions.map((location) => (
