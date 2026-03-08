@@ -53,6 +53,8 @@ const Opportunities = () => {
   );
 
   return (
+    <>
+    <SEO title="Career Opportunities - OpportunityHub" description="Discover internships, jobs, contests, and fellowships from top companies worldwide." />
     <div className="min-h-screen bg-muted/30">
       <div className="bg-card border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
