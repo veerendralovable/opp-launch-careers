@@ -264,7 +264,7 @@ const UnifiedNavigation = () => {
               {user && userRole === 'admin' && (
                 <>
                   <div className="border-t pt-2 mt-2">
-                    <div className="px-3 py-1 text-xs font-semibold text-gray-500 uppercase">Admin</div>
+                    <div className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase">Admin</div>
                     {adminNavItems.map((item) => (
                       <Link
                         key={item.path}
