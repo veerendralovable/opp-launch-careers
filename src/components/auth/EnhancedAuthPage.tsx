@@ -214,6 +214,16 @@ const EnhancedAuthPage: React.FC = () => {
                         'Sign In'
                       )}
                     </Button>
+
+                    <div className="text-center">
+                      <button
+                        type="button"
+                        onClick={() => { setForgotPassword(true); setError(null); }}
+                        className="text-sm text-primary hover:underline font-medium"
+                      >
+                        Forgot Password?
+                      </button>
+                    </div>
                   </form>
                 </CardContent>
               </Card>
