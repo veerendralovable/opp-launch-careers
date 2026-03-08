@@ -231,7 +231,7 @@ const UnifiedNavigation = () => {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t bg-white">
+          <div className="md:hidden border-t bg-background">
             <div className="px-2 pt-2 pb-3 space-y-1">
               {mainNavItems.map((item) => (
                 <Link
