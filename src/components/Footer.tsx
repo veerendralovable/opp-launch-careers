@@ -46,6 +46,8 @@ const Footer = () => {
     { name: 'My Profile', path: '/profile' },
     { name: 'Bookmarks', path: '/bookmarks' },
     { name: 'Submit Opportunity', path: '/submit' },
+    { name: 'Resume Builder', path: '/resume-builder' },
+    { name: 'Notifications', path: '/notifications' },
   ] : [
     { name: 'Sign In', path: '/auth' },
     { name: 'Create Account', path: '/auth' },

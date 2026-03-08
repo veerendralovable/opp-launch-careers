@@ -221,6 +221,7 @@ const Opportunities = () => {
         )}
       </div>
     </div>
+    </>
   );
 };
 
