@@ -100,6 +100,10 @@ const App = () => {
                       <Route path="/blog" element={<Blog />} />
                       <Route path="/blog/:slug" element={<BlogArticle />} />
                       <Route path="/faq" element={<FAQ />} />
+                      <Route path="/guides" element={<Guides />} />
+                      <Route path="/guides/interview" element={<InterviewGuide />} />
+                      <Route path="/guides/resume" element={<ResumeGuide />} />
+                      <Route path="/guides/scholarship" element={<ScholarshipGuide />} />
                       
                       {/* Protected Routes */}
                       <Route
