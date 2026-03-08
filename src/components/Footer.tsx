@@ -37,6 +37,7 @@ const Footer = () => {
     { name: 'Advanced Search', path: '/search' },
     { name: 'About Us', path: '/about' },
     { name: 'Contact', path: '/contact' },
+    { name: 'FAQ', path: '/faq' },
   ];
 
   const userLinks = user ? [

@@ -95,6 +95,7 @@ const App = () => {
                       <Route path="/cookies" element={<Cookies />} />
                       <Route path="/blog" element={<Blog />} />
                       <Route path="/blog/:slug" element={<BlogArticle />} />
+                      <Route path="/faq" element={<FAQ />} />
                       
                       {/* Protected Routes */}
                       <Route
