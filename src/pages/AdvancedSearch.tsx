@@ -296,7 +296,7 @@ const AdvancedSearch = () => {
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-gray-600 mb-4 line-clamp-3">{opportunity.description}</p>
+                      <p className="text-muted-foreground mb-4 line-clamp-3">{opportunity.description}</p>
                       
                       <div className="space-y-2 mb-4">
                         {opportunity.company && (
