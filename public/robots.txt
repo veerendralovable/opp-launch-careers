@@ -1,6 +1,17 @@
 
 User-agent: *
 Allow: /
+Allow: /opportunities
+Allow: /scholarships
+Allow: /blog
+Allow: /faq
+Allow: /about
+Allow: /contact
+Allow: /privacy
+Allow: /terms
+Allow: /cookies
+Allow: /help-center
+Allow: /search
 Disallow: /admin/
 Disallow: /moderator/
 Disallow: /advertiser/
@@ -11,7 +22,7 @@ Disallow: /applications
 Disallow: /notifications
 
 # Sitemap
-Sitemap: https://opportunityhub.com/sitemap.xml
+Sitemap: https://opp-launch-careers-hub.vercel.app/sitemap.xml
 
 # Crawling delays
 Crawl-delay: 1
