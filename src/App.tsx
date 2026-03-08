@@ -49,6 +49,7 @@ const ModeratorUsers = lazy(() => import('@/pages/ModeratorUsers'));
 const ModeratorApprovedContent = lazy(() => import('@/pages/ModeratorApprovedContent'));
 const Blog = lazy(() => import('@/pages/Blog'));
 const BlogArticle = lazy(() => import('@/pages/BlogArticle'));
+const FAQ = lazy(() => import('@/pages/FAQ'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 
 const queryClient = new QueryClient({
