@@ -23,6 +23,8 @@ import {
   Copy,
   Check
 } from 'lucide-react';
+import ApplyModal from '@/components/ApplyModal';
+import SEO from '@/components/SEO';
 
 const OpportunityDetail = () => {
   const { id } = useParams();

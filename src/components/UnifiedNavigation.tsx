@@ -269,7 +269,7 @@ const UnifiedNavigation = () => {
                       <Link
                         key={item.path}
                         to={item.path}
-                        className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                        className="block px-3 py-2 rounded-md text-base font-medium text-muted-foreground hover:text-foreground hover:bg-muted"
                         onClick={() => setMobileMenuOpen(false)}
                       >
                         <item.icon className="h-4 w-4 inline mr-2" />
@@ -283,12 +283,12 @@ const UnifiedNavigation = () => {
               {user && userRole === 'moderator' && (
                 <>
                   <div className="border-t pt-2 mt-2">
-                    <div className="px-3 py-1 text-xs font-semibold text-gray-500 uppercase">Moderator</div>
+                    <div className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase">Moderator</div>
                     {moderatorNavItems.map((item) => (
                       <Link
                         key={item.path}
                         to={item.path}
-                        className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                        className="block px-3 py-2 rounded-md text-base font-medium text-muted-foreground hover:text-foreground hover:bg-muted"
                         onClick={() => setMobileMenuOpen(false)}
                       >
                         <item.icon className="h-4 w-4 inline mr-2" />
