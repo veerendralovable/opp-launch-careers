@@ -56,6 +56,9 @@ const ResumeGuide = lazy(() => import('@/pages/guides/ResumeGuide'));
 const ScholarshipGuide = lazy(() => import('@/pages/guides/ScholarshipGuide'));
 const Notifications = lazy(() => import('@/pages/Notifications'));
 const ResumeBuilder = lazy(() => import('@/pages/ResumeBuilder'));
+const ResetPassword = lazy(() => import('@/pages/ResetPassword'));
+const MyApplications = lazy(() => import('@/pages/MyApplications'));
+const AdminContactMessages = lazy(() => import('@/pages/AdminContactMessages'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 
 const queryClient = new QueryClient({
