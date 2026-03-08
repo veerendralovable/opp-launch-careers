@@ -252,9 +252,9 @@ const AdvancedSearch = () => {
             {opportunities.length === 0 ? (
               <Card>
                 <CardContent className="pt-6 text-center">
-                  <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No opportunities found</h3>
-                  <p className="text-gray-500">Try adjusting your search criteria or filters</p>
+                  <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-foreground mb-2">No opportunities found</h3>
+                  <p className="text-muted-foreground">Try adjusting your search criteria or filters</p>
                 </CardContent>
               </Card>
             ) : (
