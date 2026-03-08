@@ -7,7 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
-import { Eye, EyeOff, Loader2, User, UserPlus, Briefcase, GraduationCap, Trophy } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { Eye, EyeOff, Loader2, User, UserPlus, Briefcase, GraduationCap, Trophy, ArrowLeft, MailCheck } from 'lucide-react';
 
 const EnhancedAuthPage: React.FC = () => {
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
