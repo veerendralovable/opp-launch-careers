@@ -57,6 +57,7 @@ const Dashboard = () => {
     { label: 'My Bookmarks', href: '/bookmarks', icon: Bookmark },
     { label: 'Submit Opportunity', href: '/submit', icon: Plus },
     { label: 'My Profile', href: '/profile', icon: FileText },
+    { label: 'Resume Builder', href: '/resume-builder', icon: FileText },
   ];
 
   return (
