@@ -50,6 +50,10 @@ const ModeratorApprovedContent = lazy(() => import('@/pages/ModeratorApprovedCon
 const Blog = lazy(() => import('@/pages/Blog'));
 const BlogArticle = lazy(() => import('@/pages/BlogArticle'));
 const FAQ = lazy(() => import('@/pages/FAQ'));
+const Guides = lazy(() => import('@/pages/guides/Guides'));
+const InterviewGuide = lazy(() => import('@/pages/guides/InterviewGuide'));
+const ResumeGuide = lazy(() => import('@/pages/guides/ResumeGuide'));
+const ScholarshipGuide = lazy(() => import('@/pages/guides/ScholarshipGuide'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 
 const queryClient = new QueryClient({
