@@ -109,6 +109,7 @@ const App = () => {
                       <Route path="/guides/interview" element={<InterviewGuide />} />
                       <Route path="/guides/resume" element={<ResumeGuide />} />
                       <Route path="/guides/scholarship" element={<ScholarshipGuide />} />
+                      <Route path="/reset-password" element={<ResetPassword />} />
                       
                       {/* Protected Routes */}
                       <Route
