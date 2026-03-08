@@ -300,7 +300,7 @@ const AdvancedSearch = () => {
                       
                       <div className="space-y-2 mb-4">
                         {opportunity.company && (
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Building className="h-4 w-4 flex-shrink-0" />
                             <span className="truncate">{opportunity.company}</span>
                           </div>
