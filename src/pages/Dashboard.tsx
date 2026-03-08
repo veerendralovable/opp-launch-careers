@@ -99,7 +99,7 @@ const Dashboard = () => {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
@@ -121,8 +121,8 @@ const Dashboard = () => {
                     <p className="text-sm text-muted-foreground">Bookmarks</p>
                     <p className="text-2xl font-bold">{stats?.bookmarks || 0}</p>
                   </div>
-                  <div className="bg-yellow-100 p-3 rounded-full">
-                    <Bookmark className="h-6 w-6 text-yellow-600" />
+                  <div className="bg-accent p-3 rounded-full">
+                    <Bookmark className="h-6 w-6 text-accent-foreground" />
                   </div>
                 </div>
               </CardContent>
@@ -135,22 +135,8 @@ const Dashboard = () => {
                     <p className="text-sm text-muted-foreground">Notifications</p>
                     <p className="text-2xl font-bold">{unreadCount}</p>
                   </div>
-                  <div className="bg-blue-100 p-3 rounded-full">
-                    <Bell className="h-6 w-6 text-blue-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Profile Views</p>
-                    <p className="text-2xl font-bold">{stats?.profileViews || 0}</p>
-                  </div>
-                  <div className="bg-green-100 p-3 rounded-full">
-                    <TrendingUp className="h-6 w-6 text-green-600" />
+                  <div className="bg-secondary p-3 rounded-full">
+                    <Bell className="h-6 w-6 text-secondary-foreground" />
                   </div>
                 </div>
               </CardContent>

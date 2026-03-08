@@ -140,6 +140,22 @@ const App = () => {
                           </ProtectedRoute>
                         }
                       />
+                      <Route
+                        path="/notifications"
+                        element={
+                          <ProtectedRoute>
+                            <Notifications />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/resume-builder"
+                        element={
+                          <ProtectedRoute>
+                            <ResumeBuilder />
+                          </ProtectedRoute>
+                        }
+                      />
 
                       {/* Admin Routes */}
                       <Route
