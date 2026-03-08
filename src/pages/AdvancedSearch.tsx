@@ -311,7 +311,7 @@ const AdvancedSearch = () => {
                             <span className="truncate">{opportunity.location}</span>
                           </div>
                         )}
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Calendar className="h-4 w-4 flex-shrink-0" />
                           <span>Deadline: {new Date(opportunity.deadline).toLocaleDateString()}</span>
                         </div>
