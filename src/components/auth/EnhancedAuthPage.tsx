@@ -71,6 +71,8 @@ const EnhancedAuthPage: React.FC = () => {
       
       if (error) {
         setError(error.message);
+      } else {
+        setSignupSuccess(true);
       }
     } catch (err: any) {
       setError(err.message || 'Registration failed');
