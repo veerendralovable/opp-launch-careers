@@ -64,6 +64,7 @@ const UnifiedNavigation = () => {
     { path: '/admin/opportunities', label: 'Opportunities', icon: Briefcase },
     { path: '/admin/users', label: 'Users', icon: Users },
     { path: '/admin/email', label: 'Email', icon: Mail },
+    { path: '/admin/contact-messages', label: 'Messages', icon: Mail },
     { path: '/admin/notifications', label: 'Notifications', icon: Bell },
     { path: '/admin/settings', label: 'Settings', icon: Settings },
   ];
