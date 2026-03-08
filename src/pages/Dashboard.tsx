@@ -6,11 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useUserDashboard } from '@/hooks/useUserDashboard';
 import { useNotifications } from '@/hooks/useNotifications';
+import SEO from '@/components/SEO';
 import { 
   Briefcase, 
   Bookmark, 
   Bell, 
-  TrendingUp, 
   ArrowRight,
   Loader2,
   FileText,
