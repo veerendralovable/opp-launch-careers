@@ -75,16 +75,16 @@ const AdvancedSearch = () => {
   const locationOptions = ['India', 'USA', 'UK', 'Canada', 'Remote', 'Global'];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b">
+    <div className="min-h-screen bg-muted/30">
+      <div className="bg-card border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Advanced Search</h1>
-          <p className="text-gray-600 mb-6">Find opportunities with powerful search and filtering</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Advanced Search</h1>
+          <p className="text-muted-foreground mb-6">Find opportunities with powerful search and filtering</p>
 
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
                   placeholder="Search opportunities, companies, skills..."
                   value={searchTerm}
@@ -154,7 +154,7 @@ const AdvancedSearch = () => {
                         <select
                           value={locationFilter}
                           onChange={(e) => setLocationFilter(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white"
+                          className="w-full px-3 py-2 border border-border rounded-md bg-card text-foreground"
                         >
                           <option value="">All Locations</option>
                           {locationOptions.map((location) => (
@@ -238,8 +238,8 @@ const AdvancedSearch = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-            <span className="ml-2 text-gray-600">Searching...</span>
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <span className="ml-2 text-muted-foreground">Searching...</span>
           </div>
         ) : (
           <>
@@ -252,9 +252,9 @@ const AdvancedSearch = () => {
             {opportunities.length === 0 ? (
               <Card>
                 <CardContent className="pt-6 text-center">
-                  <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No opportunities found</h3>
-                  <p className="text-gray-500">Try adjusting your search criteria or filters</p>
+                  <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-foreground mb-2">No opportunities found</h3>
+                  <p className="text-muted-foreground">Try adjusting your search criteria or filters</p>
                 </CardContent>
               </Card>
             ) : (
@@ -296,29 +296,29 @@ const AdvancedSearch = () => {
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-gray-600 mb-4 line-clamp-3">{opportunity.description}</p>
+                      <p className="text-muted-foreground mb-4 line-clamp-3">{opportunity.description}</p>
                       
                       <div className="space-y-2 mb-4">
                         {opportunity.company && (
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Building className="h-4 w-4 flex-shrink-0" />
                             <span className="truncate">{opportunity.company}</span>
                           </div>
                         )}
                         {opportunity.location && (
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <MapPin className="h-4 w-4 flex-shrink-0" />
                             <span className="truncate">{opportunity.location}</span>
                           </div>
                         )}
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Calendar className="h-4 w-4 flex-shrink-0" />
                           <span>Deadline: {new Date(opportunity.deadline).toLocaleDateString()}</span>
                         </div>
                       </div>
 
                       <div className="flex items-center justify-between pt-4 border-t">
-                        <span className="text-sm text-gray-500 truncate">
+                        <span className="text-sm text-muted-foreground truncate">
                           {opportunity.domain}
                         </span>
                         <div className="flex gap-2">

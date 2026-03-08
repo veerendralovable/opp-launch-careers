@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import NotificationSystem from '@/components/NotificationSystem';
+import ThemeToggle from '@/components/ThemeToggle';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -63,6 +64,7 @@ const UnifiedNavigation = () => {
     { path: '/admin/opportunities', label: 'Opportunities', icon: Briefcase },
     { path: '/admin/users', label: 'Users', icon: Users },
     { path: '/admin/email', label: 'Email', icon: Mail },
+    { path: '/admin/contact-messages', label: 'Messages', icon: Mail },
     { path: '/admin/notifications', label: 'Notifications', icon: Bell },
     { path: '/admin/settings', label: 'Settings', icon: Settings },
   ];
@@ -108,7 +110,8 @@ const UnifiedNavigation = () => {
           </div>
 
           {/* Right Side */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2">
+            <ThemeToggle />
             {user && (
               <>
                 {/* Notifications */}

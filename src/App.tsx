@@ -56,6 +56,9 @@ const ResumeGuide = lazy(() => import('@/pages/guides/ResumeGuide'));
 const ScholarshipGuide = lazy(() => import('@/pages/guides/ScholarshipGuide'));
 const Notifications = lazy(() => import('@/pages/Notifications'));
 const ResumeBuilder = lazy(() => import('@/pages/ResumeBuilder'));
+const ResetPassword = lazy(() => import('@/pages/ResetPassword'));
+const MyApplications = lazy(() => import('@/pages/MyApplications'));
+const AdminContactMessages = lazy(() => import('@/pages/AdminContactMessages'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 
 const queryClient = new QueryClient({
@@ -106,6 +109,7 @@ const App = () => {
                       <Route path="/guides/interview" element={<InterviewGuide />} />
                       <Route path="/guides/resume" element={<ResumeGuide />} />
                       <Route path="/guides/scholarship" element={<ScholarshipGuide />} />
+                      <Route path="/reset-password" element={<ResetPassword />} />
                       
                       {/* Protected Routes */}
                       <Route
@@ -153,6 +157,14 @@ const App = () => {
                         element={
                           <ProtectedRoute>
                             <ResumeBuilder />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/my-applications"
+                        element={
+                          <ProtectedRoute>
+                            <MyApplications />
                           </ProtectedRoute>
                         }
                       />
@@ -267,6 +279,14 @@ const App = () => {
                         element={
                           <ProtectedRoute requireAdmin>
                             <AdminAllOpportunities />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/admin/contact-messages"
+                        element={
+                          <ProtectedRoute requireAdmin>
+                            <AdminContactMessages />
                           </ProtectedRoute>
                         }
                       />

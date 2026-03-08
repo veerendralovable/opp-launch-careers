@@ -7,7 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
-import { Eye, EyeOff, Loader2, User, UserPlus, Briefcase, GraduationCap, Trophy } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { Eye, EyeOff, Loader2, User, UserPlus, Briefcase, GraduationCap, Trophy, ArrowLeft, MailCheck } from 'lucide-react';
 
 const EnhancedAuthPage: React.FC = () => {
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
@@ -21,6 +22,9 @@ const EnhancedAuthPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [activeTab, setActiveTab] = useState('login');
+  const [forgotPassword, setForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [signupSuccess, setSignupSuccess] = useState(false);
   const { signIn, signUp } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -67,6 +71,8 @@ const EnhancedAuthPage: React.FC = () => {
       
       if (error) {
         setError(error.message);
+      } else {
+        setSignupSuccess(true);
       }
     } catch (err: any) {
       setError(err.message || 'Registration failed');
@@ -131,6 +137,88 @@ const EnhancedAuthPage: React.FC = () => {
             <p className="text-muted-foreground">Your gateway to endless opportunities</p>
           </div>
 
+          {/* Signup Success */}
+          {signupSuccess && (
+            <Card className="border shadow-xl bg-card/95 backdrop-blur-sm">
+              <CardContent className="pt-8 text-center space-y-4">
+                <MailCheck className="h-16 w-16 text-primary mx-auto" />
+                <h2 className="text-2xl font-bold">Check Your Email</h2>
+                <p className="text-muted-foreground">
+                  We've sent a verification link to <strong>{signupForm.email}</strong>. 
+                  Please check your inbox and click the link to verify your account.
+                </p>
+                <Button variant="outline" onClick={() => { setSignupSuccess(false); setActiveTab('login'); }}>
+                  Back to Sign In
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Forgot Password */}
+          {forgotPassword && !signupSuccess && (
+            <Card className="border shadow-xl bg-card/95 backdrop-blur-sm">
+              <CardHeader className="space-y-1">
+                <button
+                  type="button"
+                  onClick={() => { setForgotPassword(false); setError(null); }}
+                  className="flex items-center text-sm text-muted-foreground hover:text-foreground mb-2"
+                >
+                  <ArrowLeft className="h-4 w-4 mr-1" /> Back to login
+                </button>
+                <CardTitle className="text-2xl font-bold">Reset Password</CardTitle>
+                <CardDescription>Enter your email to receive a password reset link</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    setError(null);
+                    setLoading(true);
+                    try {
+                      const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
+                        redirectTo: `${window.location.origin}/reset-password`,
+                      });
+                      if (error) throw error;
+                      setError(null);
+                      setForgotPassword(false);
+                      setActiveTab('login');
+                      // Show success via a simple alert swap
+                      setError('Password reset email sent! Check your inbox.');
+                    } catch (err: any) {
+                      setError(err.message || 'Failed to send reset email');
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                  className="space-y-4"
+                >
+                  {error && (
+                    <Alert variant={error.includes('sent') ? 'default' : 'destructive'}>
+                      <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                  )}
+                  <div className="space-y-2">
+                    <Label htmlFor="forgot-email">Email</Label>
+                    <Input
+                      id="forgot-email"
+                      type="email"
+                      value={forgotEmail}
+                      onChange={(e) => setForgotEmail(e.target.value)}
+                      placeholder="Enter your email"
+                      required
+                      disabled={loading}
+                      className="h-11"
+                    />
+                  </div>
+                  <Button type="submit" className="w-full h-11 font-medium" disabled={loading}>
+                    {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Sending...</> : 'Send Reset Link'}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          )}
+
+          {!forgotPassword && !signupSuccess && (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-6 h-12">
               <TabsTrigger value="login" className="text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
@@ -208,6 +296,16 @@ const EnhancedAuthPage: React.FC = () => {
                         'Sign In'
                       )}
                     </Button>
+
+                    <div className="text-center">
+                      <button
+                        type="button"
+                        onClick={() => { setForgotPassword(true); setError(null); }}
+                        className="text-sm text-primary hover:underline font-medium"
+                      >
+                        Forgot Password?
+                      </button>
+                    </div>
                   </form>
                 </CardContent>
               </Card>
@@ -308,6 +406,7 @@ const EnhancedAuthPage: React.FC = () => {
               </Card>
             </TabsContent>
           </Tabs>
+          )}
 
           <div className="text-center mt-6 text-sm text-muted-foreground">
             <p>
