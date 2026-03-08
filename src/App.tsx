@@ -160,6 +160,14 @@ const App = () => {
                           </ProtectedRoute>
                         }
                       />
+                      <Route
+                        path="/my-applications"
+                        element={
+                          <ProtectedRoute>
+                            <MyApplications />
+                          </ProtectedRoute>
+                        }
+                      />
 
                       {/* Admin Routes */}
                       <Route
