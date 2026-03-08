@@ -406,6 +406,7 @@ const EnhancedAuthPage: React.FC = () => {
               </Card>
             </TabsContent>
           </Tabs>
+          )}
 
           <div className="text-center mt-6 text-sm text-muted-foreground">
             <p>
