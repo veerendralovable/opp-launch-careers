@@ -61,6 +61,8 @@ const Dashboard = () => {
   ];
 
   return (
+    <>
+    <SEO title="Dashboard - OpportunityHub" description="Your personal dashboard for tracking applications, bookmarks, and notifications." />
     <div className="min-h-screen bg-muted/50">
       {/* Header */}
       <div className="bg-background border-b">
