@@ -282,6 +282,14 @@ const App = () => {
                           </ProtectedRoute>
                         }
                       />
+                      <Route
+                        path="/admin/contact-messages"
+                        element={
+                          <ProtectedRoute requireAdmin>
+                            <AdminContactMessages />
+                          </ProtectedRoute>
+                        }
+                      />
 
                       {/* Moderator Routes */}
                       <Route

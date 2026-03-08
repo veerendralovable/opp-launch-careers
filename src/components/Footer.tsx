@@ -45,6 +45,7 @@ const Footer = () => {
     { name: 'Dashboard', path: '/dashboard' },
     { name: 'My Profile', path: '/profile' },
     { name: 'Bookmarks', path: '/bookmarks' },
+    { name: 'My Applications', path: '/my-applications' },
     { name: 'Submit Opportunity', path: '/submit' },
     { name: 'Resume Builder', path: '/resume-builder' },
     { name: 'Notifications', path: '/notifications' },
@@ -65,52 +66,50 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="bg-gray-900 text-white">
+    <footer className="bg-foreground text-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
           {/* Company Info */}
           <div className="lg:col-span-2">
             <Link to="/" className="flex items-center mb-4">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center mr-3">
-                <span className="text-white font-bold text-sm">OH</span>
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center mr-3">
+                <span className="text-primary-foreground font-bold text-sm">OH</span>
               </div>
-              <h3 className="text-2xl font-bold text-blue-400">OpportunityHub</h3>
+              <h3 className="text-2xl font-bold text-primary">OpportunityHub</h3>
             </Link>
-            <p className="text-gray-300 mb-2 text-sm">
+            <p className="text-background/70 mb-2 text-sm">
               A product of <strong>{companyName}</strong>
             </p>
-            <p className="text-gray-300 mb-6 leading-relaxed text-sm">
+            <p className="text-background/70 mb-6 leading-relaxed text-sm">
               Connecting students and professionals with the best internships, job opportunities, 
               contests, and scholarships worldwide.
             </p>
             
-            {/* Contact Info - Only show if configured */}
             <div className="space-y-3 mb-6">
               {contactEmail && (
-                <div className="flex items-center text-gray-300">
+                <div className="flex items-center text-background/70">
                   <Mail className="h-4 w-4 mr-3 flex-shrink-0" />
-                  <a href={`mailto:${contactEmail}`} className="hover:text-blue-400 transition-colors text-sm">
+                  <a href={`mailto:${contactEmail}`} className="hover:text-primary transition-colors text-sm">
                     {contactEmail}
                   </a>
                 </div>
               )}
               {contactPhone && (
-                <div className="flex items-center text-gray-300">
+                <div className="flex items-center text-background/70">
                   <Phone className="h-4 w-4 mr-3 flex-shrink-0" />
-                  <a href={`tel:${contactPhone}`} className="hover:text-blue-400 transition-colors text-sm">
+                  <a href={`tel:${contactPhone}`} className="hover:text-primary transition-colors text-sm">
                     {contactPhone}
                   </a>
                 </div>
               )}
               {contactAddress && (
-                <div className="flex items-center text-gray-300">
+                <div className="flex items-center text-background/70">
                   <MapPin className="h-4 w-4 mr-3 flex-shrink-0" />
                   <span className="text-sm">{contactAddress}</span>
                 </div>
               )}
             </div>
 
-            {/* Social Links - Only show if configured */}
             {socialLinks.length > 0 && (
               <div className="flex space-x-4">
                 {socialLinks.map((social) => (
@@ -119,7 +118,7 @@ const Footer = () => {
                     href={social.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-gray-400 hover:text-blue-400 transition-colors p-2 rounded-lg hover:bg-gray-800"
+                    className="text-background/50 hover:text-primary transition-colors p-2 rounded-lg hover:bg-background/10"
                     aria-label={social.name}
                   >
                     <social.icon className="h-5 w-5" />
@@ -138,7 +137,7 @@ const Footer = () => {
             <ul className="space-y-2">
               {quickLinks.map((link) => (
                 <li key={link.name}>
-                  <Link to={link.path} className="text-gray-300 hover:text-blue-400 transition-colors text-sm">
+                  <Link to={link.path} className="text-background/70 hover:text-primary transition-colors text-sm">
                     {link.name}
                   </Link>
                 </li>
@@ -154,7 +153,7 @@ const Footer = () => {
             <ul className="space-y-2">
               {userLinks.map((link) => (
                 <li key={link.name}>
-                  <Link to={link.path} className="text-gray-300 hover:text-blue-400 transition-colors text-sm">
+                  <Link to={link.path} className="text-background/70 hover:text-primary transition-colors text-sm">
                     {link.name}
                   </Link>
                 </li>
@@ -171,7 +170,7 @@ const Footer = () => {
             <ul className="space-y-2 mb-6">
               {supportLinks.map((link) => (
                 <li key={link.name}>
-                  <Link to={link.path} className="text-gray-300 hover:text-blue-400 transition-colors text-sm">
+                  <Link to={link.path} className="text-background/70 hover:text-primary transition-colors text-sm">
                     {link.name}
                   </Link>
                 </li>
@@ -185,7 +184,7 @@ const Footer = () => {
             <ul className="space-y-2">
               {legalLinks.map((link) => (
                 <li key={link.name}>
-                  <Link to={link.path} className="text-gray-300 hover:text-blue-400 transition-colors text-sm">
+                  <Link to={link.path} className="text-background/70 hover:text-primary transition-colors text-sm">
                     {link.name}
                   </Link>
                 </li>
@@ -195,12 +194,12 @@ const Footer = () => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-gray-800 mt-12 pt-8">
+        <div className="border-t border-background/20 mt-12 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            <p className="text-gray-400 text-sm">
+            <p className="text-background/50 text-sm">
               © {new Date().getFullYear()} OpportunityHub by {companyName}. All rights reserved.
             </p>
-            <div className="flex items-center text-gray-400 text-sm">
+            <div className="flex items-center text-background/50 text-sm">
               <span className="mr-2">Made with</span>
               <Heart className="h-4 w-4 text-red-500 mx-1" />
               <span>for students worldwide</span>

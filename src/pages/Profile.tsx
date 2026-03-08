@@ -204,6 +204,7 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen bg-muted/50 pb-20 md:pb-0">
+      <SEO title="Profile - OpportunityHub" description="Manage your profile and account settings" />
       <div className="bg-background border-b">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center gap-3">

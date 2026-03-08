@@ -24,7 +24,7 @@ const NotificationBell: React.FC = () => {
       >
         <Bell className="h-5 w-5" />
         {unreadCount > 0 && (
-          <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs bg-red-500">
+          <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs bg-destructive text-destructive-foreground">
             {unreadCount > 9 ? '9+' : unreadCount}
           </Badge>
         )}
@@ -61,16 +61,16 @@ const NotificationBell: React.FC = () => {
             </CardHeader>
             <CardContent className="p-0 max-h-64 overflow-y-auto">
               {notifications.length === 0 ? (
-                <div className="p-4 text-center text-gray-500">
+                <div className="p-4 text-center text-muted-foreground">
                   No notifications yet
                 </div>
               ) : (
-                <div className="divide-y">
+                <div className="divide-y divide-border">
                   {notifications.map((notification) => (
                     <div
                       key={notification.id}
-                      className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors ${
-                        !notification.is_read ? 'bg-blue-50' : ''
+                      className={`p-4 hover:bg-muted cursor-pointer transition-colors ${
+                        !notification.is_read ? 'bg-primary/5' : ''
                       }`}
                       onClick={() => {
                         if (!notification.is_read) {
@@ -83,19 +83,19 @@ const NotificationBell: React.FC = () => {
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">
+                          <p className="text-sm font-medium text-foreground truncate">
                             {notification.title}
                           </p>
-                          <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                             {notification.message}
                           </p>
-                          <p className="text-xs text-gray-400 mt-2">
+                          <p className="text-xs text-muted-foreground mt-2">
                             {new Date(notification.created_at).toLocaleString()}
                           </p>
                         </div>
                         <div className="flex items-center gap-2 ml-2">
                           {!notification.is_read && (
-                            <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                            <div className="w-2 h-2 bg-primary rounded-full" />
                           )}
                           {!notification.is_read && (
                             <Button

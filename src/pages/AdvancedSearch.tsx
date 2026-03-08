@@ -318,7 +318,7 @@ const AdvancedSearch = () => {
                       </div>
 
                       <div className="flex items-center justify-between pt-4 border-t">
-                        <span className="text-sm text-gray-500 truncate">
+                        <span className="text-sm text-muted-foreground truncate">
                           {opportunity.domain}
                         </span>
                         <div className="flex gap-2">

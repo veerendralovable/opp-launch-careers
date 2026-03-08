@@ -23,40 +23,32 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const { user, loading, userRole } = useAuth();
   const location = useLocation();
 
-  console.log('ProtectedRoute - user:', user?.email, 'userRole:', userRole, 'loading:', loading);
-  console.log('ProtectedRoute - requireAuth:', requireAuth, 'requireAdmin:', requireAdmin, 'requireModerator:', requireModerator, 'requireAdvertiser:', requireAdvertiser);
-
-  // Show loading state while auth is being determined
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading...</p>
+          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading...</p>
         </div>
       </div>
     );
   }
 
-  // Check authentication requirement
   if (requireAuth && !user) {
-    console.log('Redirecting to auth - no user');
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
-  // Check admin requirement
   if (requireAdmin && userRole !== 'admin') {
-    console.log('Access denied - admin required, user role:', userRole);
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
           <CardContent className="pt-6 text-center">
-            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2 text-gray-900">Access Denied</h2>
-            <p className="text-gray-600 mb-4">
+            <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2 text-foreground">Access Denied</h2>
+            <p className="text-muted-foreground mb-4">
               You don't have permission to access this area. Admin privileges are required.
             </p>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-foreground">
               Current role: {userRole || 'None'} • Required: Admin
             </p>
           </CardContent>
@@ -65,19 +57,17 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  // Check moderator requirement
   if (requireModerator && !['moderator', 'admin'].includes(userRole || '')) {
-    console.log('Access denied - moderator required, user role:', userRole);
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
           <CardContent className="pt-6 text-center">
-            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2 text-gray-900">Access Denied</h2>
-            <p className="text-gray-600 mb-4">
+            <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2 text-foreground">Access Denied</h2>
+            <p className="text-muted-foreground mb-4">
               You don't have permission to access this area. Moderator or Admin privileges are required.
             </p>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-foreground">
               Current role: {userRole || 'None'} • Required: Moderator or Admin
             </p>
           </CardContent>
@@ -86,19 +76,17 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  // Check advertiser requirement
   if (requireAdvertiser && userRole !== 'advertiser') {
-    console.log('Access denied - advertiser required, user role:', userRole);
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
           <CardContent className="pt-6 text-center">
-            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2 text-gray-900">Access Denied</h2>
-            <p className="text-gray-600 mb-4">
+            <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2 text-foreground">Access Denied</h2>
+            <p className="text-muted-foreground mb-4">
               You don't have permission to access this area. Advertiser privileges are required.
             </p>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-foreground">
               Current role: {userRole || 'None'} • Required: Advertiser
             </p>
           </CardContent>
@@ -107,7 +95,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  console.log('Access granted - rendering children');
   return <>{children}</>;
 };
 
