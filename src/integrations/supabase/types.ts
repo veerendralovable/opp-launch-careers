@@ -171,6 +171,42 @@ export type Database = {
           },
         ]
       }
+      contact_messages: {
+        Row: {
+          category: string
+          created_at: string
+          email: string
+          id: string
+          is_read: boolean | null
+          message: string
+          name: string
+          responded_at: string | null
+          subject: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          email: string
+          id?: string
+          is_read?: boolean | null
+          message: string
+          name: string
+          responded_at?: string | null
+          subject: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          email?: string
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          name?: string
+          responded_at?: string | null
+          subject?: string
+        }
+        Relationships: []
+      }
       email_notifications: {
         Row: {
           content: string
